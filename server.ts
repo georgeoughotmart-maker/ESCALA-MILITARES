@@ -22,6 +22,7 @@ db.exec(`
     name TEXT NOT NULL,
     email TEXT UNIQUE NOT NULL,
     password TEXT NOT NULL,
+    coat_of_arms TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
 
@@ -107,7 +108,15 @@ app.post('/api/auth/login', async (req, res) => {
   }
 
   const token = jwt.sign({ id: user.id, name: user.name, email: user.email }, JWT_SECRET);
-  res.json({ token, user: { id: user.id, name: user.name, email: user.email } });
+  res.json({ token, user: { id: user.id, name: user.name, email: user.email, coat_of_arms: user.coat_of_arms } });
+});
+
+// User Profile
+app.put('/api/user/profile', authenticateToken, (req: any, res) => {
+  const { name, coat_of_arms } = req.body;
+  db.prepare('UPDATE users SET name = ?, coat_of_arms = ? WHERE id = ?')
+    .run(name, coat_of_arms, req.user.id);
+  res.json({ message: 'Perfil atualizado' });
 });
 
 // Service Types
@@ -175,21 +184,20 @@ app.delete('/api/services/:id', authenticateToken, (req: any, res) => {
 // Dashboard Stats
 app.get('/api/stats', authenticateToken, (req: any, res) => {
   const userId = req.user.id;
-  const now = new Date();
-  const currentMonth = now.toISOString().slice(0, 7); // YYYY-MM
+  const month = req.query.month || new Date().toISOString().slice(0, 7); // YYYY-MM
 
   const monthlyStats = db.prepare(`
     SELECT 
       COUNT(*) as total_services,
-      SUM(value) as total_value,
-      SUM(CASE 
+      COALESCE(SUM(value), 0) as total_value,
+      COALESCE(SUM(CASE 
         WHEN start_time IS NOT NULL AND end_time IS NOT NULL THEN 
           (strftime('%s', date || ' ' || end_time) - strftime('%s', date || ' ' || start_time)) / 3600.0
         ELSE 0 
-      END) as total_hours
+      END), 0) as total_hours
     FROM services 
     WHERE user_id = ? AND date LIKE ?
-  `).get(userId, `${currentMonth}%`) as any;
+  `).get(userId, `${month}%`) as any;
 
   const nextService = db.prepare(`
     SELECT s.*, st.name as type_name, st.color as type_color 
@@ -198,7 +206,7 @@ app.get('/api/stats', authenticateToken, (req: any, res) => {
     WHERE s.user_id = ? AND s.date >= ?
     ORDER BY s.date ASC, s.start_time ASC
     LIMIT 1
-  `).get(userId, now.toISOString().slice(0, 10));
+  `).get(userId, new Date().toISOString().slice(0, 10));
 
   res.json({
     monthly: monthlyStats || { total_services: 0, total_value: 0, total_hours: 0 },

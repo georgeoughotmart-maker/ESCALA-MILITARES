@@ -25,7 +25,12 @@ export default function Layout({ children, user, onLogout, onAddService }: Layou
     <div className="min-h-screen flex flex-col md:flex-row">
       {/* Mobile Header */}
       <header className="md:hidden bg-[#171717] border-b border-[#262626] p-4 flex justify-between items-center sticky top-0 z-50">
-        <h1 className="text-xl font-bold text-blue-500">Escala Pro</h1>
+        <div className="flex items-center gap-3">
+          {user?.coat_of_arms && (
+            <img src={user.coat_of_arms} alt="Brasão" className="w-8 h-8 object-contain" />
+          )}
+          <h1 className="text-xl font-bold text-blue-500">Escala Pro</h1>
+        </div>
         <div className="flex items-center gap-4">
           <button 
             onClick={onAddService}
@@ -39,7 +44,12 @@ export default function Layout({ children, user, onLogout, onAddService }: Layou
       {/* Sidebar (Desktop) / Bottom Nav (Mobile) */}
       <nav className="fixed bottom-0 left-0 right-0 md:relative md:w-64 bg-[#171717] border-t md:border-t-0 md:border-r border-[#262626] z-50">
         <div className="hidden md:flex flex-col p-6 h-full">
-          <h1 className="text-2xl font-bold text-blue-500 mb-8">Escala Pro</h1>
+          <div className="flex items-center gap-3 mb-8">
+            {user?.coat_of_arms && (
+              <img src={user.coat_of_arms} alt="Brasão" className="w-10 h-10 object-contain" />
+            )}
+            <h1 className="text-2xl font-bold text-blue-500">Escala Pro</h1>
+          </div>
           
           <div className="flex-1 space-y-2">
             {menuItems.map((item) => (

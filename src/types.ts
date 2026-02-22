@@ -2,6 +2,7 @@ export interface User {
   id: number;
   name: string;
   email: string;
+  coat_of_arms?: string;
 }
 
 export interface ServiceType {

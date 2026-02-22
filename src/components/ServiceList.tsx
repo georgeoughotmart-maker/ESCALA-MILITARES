@@ -31,7 +31,7 @@ export default function ServiceList({ services, onEdit, onDelete }: ServiceListP
       format(parseISO(s.date), 'dd/MM/yyyy'),
       s.type_name,
       `${s.start_time} - ${s.end_time}`,
-      `R$ ${s.value.toFixed(2)}`,
+      `R$ ${(s.value || 0).toFixed(2)}`,
       s.notes || ''
     ]);
 
@@ -43,8 +43,8 @@ export default function ServiceList({ services, onEdit, onDelete }: ServiceListP
       headStyles: { fillColor: [59, 130, 246] }
     });
 
-    const total = filteredServices.reduce((acc, s) => acc + s.value, 0);
-    doc.text(`Total Acumulado: R$ ${total.toFixed(2)}`, 14, doc.lastAutoTable.finalY + 10);
+    const total = filteredServices.reduce((acc, s) => acc + (s.value || 0), 0);
+    doc.text(`Total Acumulado: R$ ${(total || 0).toFixed(2)}`, 14, doc.lastAutoTable.finalY + 10);
     
     doc.save('relatorio-escala.pdf');
   };
@@ -119,7 +119,7 @@ export default function ServiceList({ services, onEdit, onDelete }: ServiceListP
                       </span>
                       <span className="flex items-center gap-1.5">
                         <DollarSign size={14} className="text-green-500" />
-                        R$ {service.value.toFixed(2)}
+                        R$ {(service.value || 0).toFixed(2)}
                       </span>
                     </div>
                     {service.notes && (
@@ -144,7 +144,7 @@ export default function ServiceList({ services, onEdit, onDelete }: ServiceListP
                     </button>
                   </div>
                   <div className="text-right">
-                    <p className="text-xl font-black text-white">R$ {service.value.toFixed(2)}</p>
+                    <p className="text-xl font-black text-white">R$ {(service.value || 0).toFixed(2)}</p>
                   </div>
                 </div>
               </div>

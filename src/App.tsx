@@ -17,6 +17,7 @@ export default function App() {
   const [services, setServices] = useState<Service[]>([]);
   const [serviceTypes, setServiceTypes] = useState<ServiceType[]>([]);
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [initialDate, setInitialDate] = useState<Date | undefined>(undefined);
@@ -26,13 +27,19 @@ export default function App() {
     const token = localStorage.getItem('token');
     if (storedUser && token) {
       setUser(JSON.parse(storedUser));
-      fetchData();
+      fetchData(selectedMonth);
     } else {
       setLoading(false);
     }
     
     requestNotificationPermission();
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      fetchData(selectedMonth);
+    }
+  }, [selectedMonth]);
 
   useEffect(() => {
     if (services.length > 0) {
@@ -43,12 +50,12 @@ export default function App() {
     }
   }, [services]);
 
-  const fetchData = async () => {
+  const fetchData = async (month?: string) => {
     try {
       const [servicesRes, typesRes, statsRes] = await Promise.all([
         api.services.getAll(),
         api.serviceTypes.getAll(),
-        api.stats.get()
+        api.stats.get(month)
       ]);
       setServices(servicesRes);
       setServiceTypes(typesRes);
@@ -64,13 +71,25 @@ export default function App() {
     localStorage.setItem('user', JSON.stringify(user));
     localStorage.setItem('token', token);
     setUser(user);
-    fetchData();
+    fetchData(selectedMonth);
   };
 
   const handleLogout = () => {
     localStorage.removeItem('user');
     localStorage.removeItem('token');
     setUser(null);
+  };
+
+  const handleUpdateProfile = async (data: any) => {
+    try {
+      await api.user.updateProfile(data);
+      const updatedUser = { ...user!, ...data };
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      alert('Perfil atualizado com sucesso!');
+    } catch (error) {
+      alert('Erro ao atualizar perfil');
+    }
   };
 
   const handleSaveService = async (data: any) => {
@@ -82,7 +101,7 @@ export default function App() {
       }
       setIsFormOpen(false);
       setEditingService(null);
-      fetchData();
+      fetchData(selectedMonth);
     } catch (error) {
       alert('Erro ao salvar serviço');
     }
@@ -94,7 +113,7 @@ export default function App() {
         await api.services.delete(id);
         setIsFormOpen(false);
         setEditingService(null);
-        fetchData();
+        fetchData(selectedMonth);
       } catch (error) {
         alert('Erro ao excluir serviço');
       }
@@ -104,7 +123,7 @@ export default function App() {
   const handleAddType = async (data: any) => {
     try {
       await api.serviceTypes.create(data);
-      fetchData();
+      fetchData(selectedMonth);
     } catch (error) {
       alert('Erro ao criar tipo de serviço');
     }
@@ -113,7 +132,7 @@ export default function App() {
   const handleUpdateType = async (id: number, data: any) => {
     try {
       await api.serviceTypes.update(id, data);
-      fetchData();
+      fetchData(selectedMonth);
     } catch (error) {
       alert('Erro ao atualizar tipo de serviço');
     }
@@ -123,7 +142,7 @@ export default function App() {
     if (confirm('Deseja excluir este tipo? Isso não afetará serviços já registrados.')) {
       try {
         await api.serviceTypes.delete(id);
-        fetchData();
+        fetchData(selectedMonth);
       } catch (error) {
         alert('Erro ao excluir tipo de serviço');
       }
@@ -150,7 +169,7 @@ export default function App() {
         onAddService={() => { setEditingService(null); setInitialDate(undefined); setIsFormOpen(true); }}
       >
         <Routes>
-          <Route path="/" element={stats ? <Dashboard stats={stats} recentServices={services} /> : null} />
+          <Route path="/" element={stats ? <Dashboard stats={stats} recentServices={services} selectedMonth={selectedMonth} onMonthChange={setSelectedMonth} /> : null} />
           <Route path="/calendar" element={
             <Calendar 
               services={services} 
@@ -167,10 +186,12 @@ export default function App() {
           } />
           <Route path="/settings" element={
             <Settings 
+              user={user}
               serviceTypes={serviceTypes} 
               onAddType={handleAddType}
               onUpdateType={handleUpdateType}
               onDeleteType={handleDeleteType}
+              onUpdateProfile={handleUpdateProfile}
             />
           } />
           <Route path="*" element={<Navigate to="/" replace />} />

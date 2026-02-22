@@ -37,6 +37,10 @@ export const api = {
   },
 
   stats: {
-    get: () => api.request('/api/stats'),
+    get: (month?: string) => api.request(`/api/stats${month ? `?month=${month}` : ''}`),
+  },
+
+  user: {
+    updateProfile: (data: { name: string; coat_of_arms?: string }) => api.request('/api/user/profile', { method: 'PUT', body: JSON.stringify(data) }),
   }
 };

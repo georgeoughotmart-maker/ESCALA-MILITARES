@@ -9,10 +9,21 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 interface DashboardProps {
   stats: DashboardStats;
   recentServices: Service[];
+  selectedMonth: string;
+  onMonthChange: (month: string) => void;
 }
 
-export default function Dashboard({ stats, recentServices }: DashboardProps) {
+export default function Dashboard({ stats, recentServices, selectedMonth, onMonthChange }: DashboardProps) {
   const { monthly, nextService } = stats;
+
+  const last12Months = Array.from({ length: 12 }, (_, i) => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - i);
+    return {
+      value: d.toISOString().slice(0, 7),
+      label: format(d, 'MMMM yyyy', { locale: ptBR })
+    };
+  });
 
   const chartData = recentServices.slice(0, 7).reverse().map(s => ({
     date: format(parseISO(s.date), 'dd/MM'),
@@ -21,13 +32,24 @@ export default function Dashboard({ stats, recentServices }: DashboardProps) {
 
   return (
     <div className="space-y-6">
-      <header className="flex justify-between items-center">
+      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold text-white">Dashboard</h2>
           <p className="text-neutral-500">Resumo do seu serviço este mês</p>
         </div>
-        <div className="w-10 h-10 bg-[#171717] border border-[#262626] rounded-full flex items-center justify-center text-neutral-400">
-          <Bell size={20} />
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <select
+            value={selectedMonth}
+            onChange={(e) => onMonthChange(e.target.value)}
+            className="flex-1 sm:flex-none bg-[#171717] border border-[#262626] rounded-xl px-4 py-2 text-sm text-white focus:border-blue-500 outline-none capitalize"
+          >
+            {last12Months.map(m => (
+              <option key={m.value} value={m.value}>{m.label}</option>
+            ))}
+          </select>
+          <div className="w-10 h-10 bg-[#171717] border border-[#262626] rounded-full flex items-center justify-center text-neutral-400 shrink-0">
+            <Bell size={20} />
+          </div>
         </div>
       </header>
 
@@ -36,14 +58,14 @@ export default function Dashboard({ stats, recentServices }: DashboardProps) {
         <StatCard 
           icon={DollarSign} 
           label="Ganhos Mensais" 
-          value={`R$ ${monthly.total_value.toFixed(2)}`} 
+          value={`R$ ${(monthly.total_value || 0).toFixed(2)}`} 
           color="text-green-500" 
           bg="bg-green-500/10"
         />
         <StatCard 
           icon={Clock} 
           label="Horas Trabalhadas" 
-          value={`${monthly.total_hours.toFixed(1)}h`} 
+          value={`${(monthly.total_hours || 0).toFixed(1)}h`} 
           color="text-blue-500" 
           bg="bg-blue-500/10"
         />
@@ -83,7 +105,7 @@ export default function Dashboard({ stats, recentServices }: DashboardProps) {
               <div className="flex items-center justify-between pt-4 border-t border-[#262626]">
                 <div className="flex items-center gap-2 text-green-500">
                   <DollarSign size={16} />
-                  <span className="font-bold">R$ {nextService.value.toFixed(2)}</span>
+                  <span className="font-bold">R$ {(nextService.value || 0).toFixed(2)}</span>
                 </div>
                 <button className="text-blue-500 text-sm font-medium flex items-center gap-1 hover:underline">
                   Ver detalhes <ArrowUpRight size={14} />
@@ -159,7 +181,7 @@ export default function Dashboard({ stats, recentServices }: DashboardProps) {
                 </div>
               </div>
               <div className="text-right">
-                <p className="font-bold text-white">R$ {service.value.toFixed(2)}</p>
+                <p className="font-bold text-white">R$ {(service.value || 0).toFixed(2)}</p>
                 <p className="text-[10px] text-neutral-500 uppercase tracking-wider">Pago</p>
               </div>
             </div>
