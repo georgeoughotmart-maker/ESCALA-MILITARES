@@ -175,6 +175,7 @@ export default function App() {
               services={services} 
               onAddService={(date) => { setInitialDate(date); setEditingService(null); setIsFormOpen(true); }} 
               onEditService={(service) => { setEditingService(service); setIsFormOpen(true); }}
+              onDeleteService={handleDeleteService}
             />
           } />
           <Route path="/services" element={

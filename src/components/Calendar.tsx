@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Trash2 } from 'lucide-react';
 import { Service } from '../types';
 
 interface CalendarProps {
   services: Service[];
   onAddService: (date: Date) => void;
   onEditService: (service: Service) => void;
+  onDeleteService: (id: number) => void;
 }
 
-export default function Calendar({ services, onAddService, onEditService }: CalendarProps) {
+export default function Calendar({ services, onAddService, onEditService, onDeleteService }: CalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
 
   const monthStart = startOfMonth(currentDate);
@@ -24,7 +25,13 @@ export default function Calendar({ services, onAddService, onEditService }: Cale
   const prevMonth = () => setCurrentDate(subMonths(currentDate, 1));
 
   const getServicesForDay = (day: Date) => {
-    return services.filter(s => isSameDay(new Date(s.date + 'T12:00:00'), day));
+    return services.filter(s => {
+      try {
+        return isSameDay(parseISO(s.date), day);
+      } catch (e) {
+        return false;
+      }
+    });
   };
 
   return (
@@ -82,10 +89,19 @@ export default function Calendar({ services, onAddService, onEditService }: Cale
                       e.stopPropagation();
                       onEditService(service);
                     }}
-                    className="text-[10px] px-1.5 py-0.5 rounded border border-transparent hover:border-white/20 truncate cursor-pointer transition-all"
+                    className="group/item relative text-[10px] px-1.5 py-0.5 rounded border border-transparent hover:border-white/20 truncate cursor-pointer transition-all"
                     style={{ backgroundColor: `${service.type_color}20`, color: service.type_color }}
                   >
-                    {service.type_name}
+                    <span className="truncate block pr-3">{service.type_name}</span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteService(service.id);
+                      }}
+                      className="absolute right-0.5 top-1/2 -translate-y-1/2 opacity-0 group-hover/item:opacity-100 p-0.5 hover:bg-red-500/20 rounded text-red-500 transition-all"
+                    >
+                      <Trash2 size={10} />
+                    </button>
                   </div>
                 ))}
               </div>

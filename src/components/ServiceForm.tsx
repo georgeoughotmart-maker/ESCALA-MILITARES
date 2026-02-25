@@ -25,14 +25,23 @@ export default function ServiceForm({ service, serviceTypes, initialDate, onClos
   });
 
   useEffect(() => {
-    if (!service && formData.type_id) {
+    if (!service && !formData.type_id && serviceTypes.length > 0) {
+      setFormData(prev => ({ ...prev, type_id: serviceTypes[0].id }));
+    }
+  }, [serviceTypes, service, formData.type_id]);
+
+  useEffect(() => {
+    if (formData.type_id) {
       const type = serviceTypes.find(t => t.id === Number(formData.type_id));
       if (type) {
-        setFormData(prev => ({ ...prev, value: type.default_value }));
+        // Only auto-set value if we're creating a new service
+        if (!service) {
+          setFormData(prev => ({ ...prev, value: type.default_value }));
+        }
         
         // Auto-calculate end time based on workload
         if (type.default_workload === '24h') {
-          setFormData(prev => ({ ...prev, end_time: prev.start_time }));
+          setFormData(prev => ({ ...prev, end_time: formData.start_time }));
         } else if (type.default_workload.includes('h')) {
           const hours = parseInt(type.default_workload);
           const [h, m] = formData.start_time.split(':').map(Number);
@@ -41,7 +50,7 @@ export default function ServiceForm({ service, serviceTypes, initialDate, onClos
         }
       }
     }
-  }, [formData.type_id, serviceTypes, service]);
+  }, [formData.type_id, serviceTypes, service, formData.start_time]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

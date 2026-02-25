@@ -1,5 +1,5 @@
 {
   "name": "Escala Militar Pro",
   "description": "Gerenciamento completo de escalas de serviço militar com controle financeiro, relatórios e notificações.",
-  "requestFramePermissions": ["notifications"]
+  "requestFramePermissions": []
 }

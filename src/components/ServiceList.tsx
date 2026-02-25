@@ -25,7 +25,22 @@ export default function ServiceList({ services, onEdit, onDelete }: ServiceListP
 
   const exportToPDF = () => {
     const doc = new jsPDF() as any;
-    doc.text('Relatório de Escala de Serviço', 14, 15);
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    
+    // Add Coat of Arms if exists
+    if (user.coat_of_arms) {
+      try {
+        doc.addImage(user.coat_of_arms, 'PNG', 14, 10, 20, 20);
+      } catch (e) {
+        console.error('Erro ao adicionar brasão ao PDF', e);
+      }
+    }
+
+    doc.setFontSize(18);
+    doc.text('Relatório de Escala de Serviço', user.coat_of_arms ? 40 : 14, 22);
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Militar: ${user.name || 'Não identificado'}`, user.coat_of_arms ? 40 : 14, 28);
     
     const tableData = filteredServices.map(s => [
       format(parseISO(s.date), 'dd/MM/yyyy'),
@@ -38,7 +53,7 @@ export default function ServiceList({ services, onEdit, onDelete }: ServiceListP
     doc.autoTable({
       head: [['Data', 'Tipo', 'Horário', 'Valor', 'Observações']],
       body: tableData,
-      startY: 25,
+      startY: 35,
       theme: 'grid',
       headStyles: { fillColor: [59, 130, 246] }
     });

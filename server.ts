@@ -13,6 +13,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const db = new Database('database.db');
+db.pragma('foreign_keys = ON');
 const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key-militar';
 
 // Initialize Database
@@ -33,13 +34,13 @@ db.exec(`
     default_value REAL DEFAULT 0,
     color TEXT DEFAULT '#3b82f6',
     default_workload TEXT DEFAULT '24h',
-    FOREIGN KEY (user_id) REFERENCES users (id)
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
   );
 
   CREATE TABLE IF NOT EXISTS services (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
-    type_id INTEGER NOT NULL,
+    type_id INTEGER,
     date TEXT NOT NULL,
     start_time TEXT,
     end_time TEXT,
@@ -48,13 +49,30 @@ db.exec(`
     reminder_enabled INTEGER DEFAULT 0,
     reminder_before_hours INTEGER DEFAULT 1,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users (id),
-    FOREIGN KEY (type_id) REFERENCES service_types (id)
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+    FOREIGN KEY (type_id) REFERENCES service_types (id) ON DELETE SET NULL
   );
 `);
 
+// Migration: Add coat_of_arms if missing
+try {
+  const columns = db.prepare("PRAGMA table_info(users)").all() as any[];
+  if (!columns.find(c => c.name === 'coat_of_arms')) {
+    db.exec("ALTER TABLE users ADD COLUMN coat_of_arms TEXT");
+  }
+} catch (e) {
+  console.error("Migration error:", e);
+}
+
 const app = express();
-app.use(express.json());
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api')) {
+    console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  }
+  next();
+});
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // Auth Middleware
 const authenticateToken = (req: any, res: any, next: any) => {
@@ -71,6 +89,15 @@ const authenticateToken = (req: any, res: any, next: any) => {
 };
 
 // --- API Routes ---
+
+app.get('/api/health', (req, res) => {
+  const fkStatus = db.prepare('PRAGMA foreign_keys').get() as any;
+  res.json({ 
+    status: 'ok', 
+    time: new Date().toISOString(),
+    foreign_keys: fkStatus.foreign_keys === 1 ? 'enabled' : 'disabled'
+  });
+});
 
 // Auth
 app.post('/api/auth/register', async (req, res) => {
@@ -121,7 +148,24 @@ app.put('/api/user/profile', authenticateToken, (req: any, res) => {
 
 // Service Types
 app.get('/api/service-types', authenticateToken, (req: any, res) => {
-  const types = db.prepare('SELECT * FROM service_types WHERE user_id = ?').all(req.user.id);
+  let types = db.prepare('SELECT * FROM service_types WHERE user_id = ?').all(req.user.id);
+  
+  // If user has no types, create defaults
+  if (types.length === 0) {
+    const defaultTypes = [
+      { name: 'Ordinário', value: 0, color: '#3b82f6', workload: '24h' },
+      { name: 'PJES', value: 200, color: '#10b981', workload: '12h' },
+      { name: 'Diária', value: 150, color: '#f59e0b', workload: '8h' },
+      { name: 'Extra', value: 100, color: '#ef4444', workload: '6h' }
+    ];
+    
+    const typeStmt = db.prepare('INSERT INTO service_types (user_id, name, default_value, color, default_workload) VALUES (?, ?, ?, ?, ?)');
+    for (const type of defaultTypes) {
+      typeStmt.run(req.user.id, type.name, type.value, type.color, type.workload);
+    }
+    types = db.prepare('SELECT * FROM service_types WHERE user_id = ?').all(req.user.id);
+  }
+  
   res.json(types);
 });
 
@@ -140,16 +184,28 @@ app.put('/api/service-types/:id', authenticateToken, (req: any, res) => {
 });
 
 app.delete('/api/service-types/:id', authenticateToken, (req: any, res) => {
-  db.prepare('DELETE FROM service_types WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
+  const typeId = req.params.id;
+  const userId = req.user.id;
+  
+  // Verify the type belongs to the user first
+  const type = db.prepare('SELECT id FROM service_types WHERE id = ? AND user_id = ?').get(typeId, userId);
+  if (!type) return res.status(404).json({ error: 'Tipo de serviço não encontrado' });
+
+  // Manually handle the foreign key by nullifying services that use this type
+  // We do this for all services regardless of user_id to be absolutely sure we clear the FK
+  db.prepare('UPDATE services SET type_id = NULL WHERE type_id = ?').run(typeId);
+  
+  // Now it's safe to delete the type
+  db.prepare('DELETE FROM service_types WHERE id = ? AND user_id = ?').run(typeId, userId);
   res.json({ message: 'Tipo de serviço excluído' });
 });
 
 // Services
 app.get('/api/services', authenticateToken, (req: any, res) => {
   const services = db.prepare(`
-    SELECT s.*, st.name as type_name, st.color as type_color 
+    SELECT s.*, COALESCE(st.name, 'Tipo Excluído') as type_name, COALESCE(st.color, '#666666') as type_color 
     FROM services s 
-    JOIN service_types st ON s.type_id = st.id 
+    LEFT JOIN service_types st ON s.type_id = st.id 
     WHERE s.user_id = ?
     ORDER BY s.date DESC
   `).all(req.user.id);
@@ -158,21 +214,41 @@ app.get('/api/services', authenticateToken, (req: any, res) => {
 
 app.post('/api/services', authenticateToken, (req: any, res) => {
   const { type_id, date, start_time, end_time, value, notes, reminder_enabled, reminder_before_hours } = req.body;
+  
+  // Ensure type_id is a number or null
+  const cleanTypeId = type_id && type_id !== '' ? Number(type_id) : null;
+
+  // Validate type_id belongs to user if provided
+  if (cleanTypeId) {
+    const type = db.prepare('SELECT id FROM service_types WHERE id = ? AND user_id = ?').get(cleanTypeId, req.user.id);
+    if (!type) return res.status(400).json({ error: 'Tipo de serviço inválido para este usuário' });
+  }
+
   const stmt = db.prepare(`
     INSERT INTO services (user_id, type_id, date, start_time, end_time, value, notes, reminder_enabled, reminder_before_hours) 
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
-  const info = stmt.run(req.user.id, type_id, date, start_time, end_time, value, notes, reminder_enabled ? 1 : 0, reminder_before_hours);
+  const info = stmt.run(req.user.id, cleanTypeId, date, start_time, end_time, value, notes, reminder_enabled ? 1 : 0, reminder_before_hours);
   res.status(201).json({ id: info.lastInsertRowid });
 });
 
 app.put('/api/services/:id', authenticateToken, (req: any, res) => {
   const { type_id, date, start_time, end_time, value, notes, reminder_enabled, reminder_before_hours } = req.body;
+  
+  // Ensure type_id is a number or null
+  const cleanTypeId = type_id && type_id !== '' ? Number(type_id) : null;
+
+  // Validate type_id belongs to user if provided
+  if (cleanTypeId) {
+    const type = db.prepare('SELECT id FROM service_types WHERE id = ? AND user_id = ?').get(cleanTypeId, req.user.id);
+    if (!type) return res.status(400).json({ error: 'Tipo de serviço inválido para este usuário' });
+  }
+
   db.prepare(`
     UPDATE services 
     SET type_id = ?, date = ?, start_time = ?, end_time = ?, value = ?, notes = ?, reminder_enabled = ?, reminder_before_hours = ? 
     WHERE id = ? AND user_id = ?
-  `).run(type_id, date, start_time, end_time, value, notes, reminder_enabled ? 1 : 0, reminder_before_hours, req.params.id, req.user.id);
+  `).run(cleanTypeId, date, start_time, end_time, value, notes, reminder_enabled ? 1 : 0, reminder_before_hours, req.params.id, req.user.id);
   res.json({ message: 'Serviço atualizado' });
 });
 
@@ -200,9 +276,9 @@ app.get('/api/stats', authenticateToken, (req: any, res) => {
   `).get(userId, `${month}%`) as any;
 
   const nextService = db.prepare(`
-    SELECT s.*, st.name as type_name, st.color as type_color 
+    SELECT s.*, COALESCE(st.name, 'Tipo Excluído') as type_name, COALESCE(st.color, '#666666') as type_color 
     FROM services s 
-    JOIN service_types st ON s.type_id = st.id 
+    LEFT JOIN service_types st ON s.type_id = st.id 
     WHERE s.user_id = ? AND s.date >= ?
     ORDER BY s.date ASC, s.start_time ASC
     LIMIT 1
@@ -212,6 +288,26 @@ app.get('/api/stats', authenticateToken, (req: any, res) => {
     monthly: monthlyStats || { total_services: 0, total_value: 0, total_hours: 0 },
     nextService
   });
+});
+
+// API 404 Handler
+app.use('/api', (req, res) => {
+  res.status(404).json({ error: `Rota API não encontrada: ${req.method} ${req.originalUrl}` });
+});
+
+// Global Error Handler for API
+app.use((err: any, req: any, res: any, next: any) => {
+  if (req.path.startsWith('/api')) {
+    console.error(`API Error [${req.method} ${req.path}]:`, err);
+    if (req.body) console.error('Request Body:', JSON.stringify(req.body, null, 2));
+    
+    return res.status(err.status || 500).json({ 
+      error: err.message || 'Erro interno no servidor',
+      code: err.code,
+      details: process.env.NODE_ENV !== 'production' ? err.stack : undefined
+    });
+  }
+  next(err);
 });
 
 // --- Vite Integration ---

@@ -11,8 +11,22 @@ export const api = {
 
     const response = await fetch(`${API_URL}${endpoint}`, { ...options, headers });
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || 'Erro na requisição');
+      let errorMessage = 'Erro na requisição';
+      const contentType = response.headers.get('content-type');
+      
+      if (contentType && contentType.includes('application/json')) {
+        try {
+          const error = await response.json();
+          errorMessage = error.error || errorMessage;
+        } catch (e) {
+          errorMessage = `Erro ao processar resposta JSON (${response.status})`;
+        }
+      } else {
+        const text = await response.text();
+        console.error('Resposta não-JSON do servidor:', text.slice(0, 200));
+        errorMessage = `Erro do servidor (${response.status}): Resposta inesperada`;
+      }
+      throw new Error(errorMessage);
     }
     return response.json();
   },

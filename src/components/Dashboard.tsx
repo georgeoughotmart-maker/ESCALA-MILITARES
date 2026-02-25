@@ -25,17 +25,34 @@ export default function Dashboard({ stats, recentServices, selectedMonth, onMont
     };
   });
 
-  const chartData = recentServices.slice(0, 7).reverse().map(s => ({
-    date: format(parseISO(s.date), 'dd/MM'),
-    value: s.value
-  }));
+  const chartData = recentServices
+    .filter(s => s.date.startsWith(selectedMonth))
+    .slice(0, 7)
+    .reverse()
+    .map(s => ({
+      date: format(parseISO(s.date), 'dd/MM'),
+      value: s.value
+    }));
+
+  const breakdown = recentServices
+    .filter(s => s.date.startsWith(selectedMonth))
+    .reduce((acc: any, s) => {
+      if (!acc[s.type_name]) {
+        acc[s.type_name] = { name: s.type_name, value: 0, color: s.type_color, count: 0 };
+      }
+      acc[s.type_name].value += s.value;
+      acc[s.type_name].count += 1;
+      return acc;
+    }, {});
+
+  const breakdownArray = Object.values(breakdown).sort((a: any, b: any) => b.value - a.value);
 
   return (
     <div className="space-y-6">
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold text-white">Dashboard</h2>
-          <p className="text-neutral-500">Resumo do seu serviço este mês</p>
+          <p className="text-neutral-500">Resumo do seu serviço em {last12Months.find(m => m.value === selectedMonth)?.label}</p>
         </div>
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <select
@@ -57,7 +74,7 @@ export default function Dashboard({ stats, recentServices, selectedMonth, onMont
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <StatCard 
           icon={DollarSign} 
-          label="Ganhos Mensais" 
+          label="Ganhos no Período" 
           value={`R$ ${(monthly.total_value || 0).toFixed(2)}`} 
           color="text-green-500" 
           bg="bg-green-500/10"
@@ -79,8 +96,80 @@ export default function Dashboard({ stats, recentServices, selectedMonth, onMont
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Next Service */}
+        {/* Breakdown by Type */}
         <div className="lg:col-span-1 space-y-4">
+          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+            <DollarSign size={18} className="text-green-500" />
+            Por Categoria
+          </h3>
+          <div className="bg-[#171717] border border-[#262626] rounded-2xl p-6 space-y-4">
+            {breakdownArray.length > 0 ? (
+              breakdownArray.map((item: any) => (
+                <div key={item.name} className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-neutral-400 flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
+                      {item.name} ({item.count})
+                    </span>
+                    <span className="text-white font-bold">R$ {item.value.toFixed(2)}</span>
+                  </div>
+                  <div className="w-full bg-[#262626] h-1.5 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full transition-all duration-500" 
+                      style={{ 
+                        width: `${monthly.total_value > 0 ? (item.value / monthly.total_value) * 100 : 0}%`,
+                        backgroundColor: item.color 
+                      }} 
+                    />
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="text-neutral-500 text-sm text-center py-4">Nenhum dado para este mês</p>
+            )}
+          </div>
+
+          {/* Next Service (Desktop) */}
+          <div className="hidden lg:block space-y-4 pt-4">
+            <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+              <Clock size={18} className="text-blue-500" />
+              Próximo Serviço
+            </h3>
+            {nextService ? (
+              <div className="bg-[#171717] border border-[#262626] rounded-2xl p-6 relative overflow-hidden group">
+                <div 
+                  className="absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 rounded-full opacity-10 group-hover:scale-110 transition-transform"
+                  style={{ backgroundColor: nextService.type_color }}
+                />
+                <div className="flex justify-between items-start mb-4">
+                  <span 
+                    className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                    style={{ backgroundColor: `${nextService.type_color}20`, color: nextService.type_color }}
+                  >
+                    {nextService.type_name}
+                  </span>
+                  <p className="text-xs text-neutral-500">{format(parseISO(nextService.date), "EEEE, d 'de' MMMM", { locale: ptBR })}</p>
+                </div>
+                <h4 className="text-xl font-bold text-white mb-1">{nextService.type_name}</h4>
+                <p className="text-neutral-400 text-sm mb-4">Início: {nextService.start_time || 'N/A'}</p>
+                <div className="flex items-center justify-between pt-4 border-t border-[#262626]">
+                  <div className="flex items-center gap-2 text-green-500">
+                    <DollarSign size={16} />
+                    <span className="font-bold">R$ {(nextService.value || 0).toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-[#171717] border border-[#262626] border-dashed rounded-2xl p-8 flex flex-col items-center justify-center text-center">
+                <CalendarIcon size={32} className="text-neutral-600 mb-2" />
+                <p className="text-neutral-500 text-sm">Nenhum serviço agendado</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Next Service (Below Breakdown on Mobile, separate logic) */}
+        <div className="lg:hidden space-y-4">
           <h3 className="text-lg font-semibold text-white flex items-center gap-2">
             <Clock size={18} className="text-blue-500" />
             Próximo Serviço
@@ -107,9 +196,6 @@ export default function Dashboard({ stats, recentServices, selectedMonth, onMont
                   <DollarSign size={16} />
                   <span className="font-bold">R$ {(nextService.value || 0).toFixed(2)}</span>
                 </div>
-                <button className="text-blue-500 text-sm font-medium flex items-center gap-1 hover:underline">
-                  Ver detalhes <ArrowUpRight size={14} />
-                </button>
               </div>
             </div>
           ) : (
