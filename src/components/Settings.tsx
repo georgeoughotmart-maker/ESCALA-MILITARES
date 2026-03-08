@@ -14,6 +14,7 @@ interface SettingsProps {
 export default function Settings({ user, serviceTypes, onAddType, onUpdateType, onDeleteType, onUpdateProfile }: SettingsProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [saving, setSaving] = useState(false);
   const [profileData, setProfileData] = useState({
     name: user.name,
     coat_of_arms: user.coat_of_arms || ''
@@ -38,8 +39,13 @@ export default function Settings({ user, serviceTypes, onAddType, onUpdateType, 
     }
   };
 
-  const handleSaveProfile = () => {
-    onUpdateProfile(profileData);
+  const handleSaveProfile = async () => {
+    setSaving(true);
+    try {
+      await onUpdateProfile(profileData);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleEdit = (type: ServiceType) => {
@@ -52,15 +58,22 @@ export default function Settings({ user, serviceTypes, onAddType, onUpdateType, 
     });
   };
 
-  const handleSave = () => {
-    if (editingId) {
-      onUpdateType(editingId, formData);
-      setEditingId(null);
-    } else {
-      onAddType(formData);
-      setIsAdding(false);
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      if (editingId) {
+        await onUpdateType(editingId, formData);
+        setEditingId(null);
+      } else {
+        await onAddType(formData);
+        setIsAdding(false);
+      }
+      setFormData({ name: '', default_value: 0, color: '#3b82f6', default_workload: '24h' });
+    } catch (e) {
+      // Error is already handled with alert in App.tsx
+    } finally {
+      setSaving(false);
     }
-    setFormData({ name: '', default_value: 0, color: '#3b82f6', default_workload: '24h' });
   };
 
   return (
@@ -113,9 +126,10 @@ export default function Settings({ user, serviceTypes, onAddType, onUpdateType, 
             </div>
             <button
               onClick={handleSaveProfile}
-              className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-blue-600/20 transition-all active:scale-[0.98]"
+              disabled={saving}
+              className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-blue-600/20 transition-all active:scale-[0.98] disabled:opacity-50"
             >
-              Salvar Perfil
+              {saving ? 'Salvando...' : 'Salvar Perfil'}
             </button>
           </div>
         </div>
@@ -203,10 +217,15 @@ export default function Settings({ user, serviceTypes, onAddType, onUpdateType, 
 
               <button
                 onClick={handleSave}
-                className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all"
+                disabled={saving}
+                className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50"
               >
-                <Save size={18} />
-                Salvar Tipo
+                {saving ? (
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <Save size={18} />
+                )}
+                {saving ? 'Salvando...' : 'Salvar Tipo'}
               </button>
             </div>
           )}
