@@ -1,8 +1,6 @@
 import express from 'express';
-import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import Database from 'better-sqlite3';
 import { createClient } from '@libsql/client';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
@@ -17,90 +15,80 @@ const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key-militar';
 
 // Database Configuration
 const isTurso = !!(process.env.TURSO_DATABASE_URL || process.env.TURSO_URL);
+const isVercel = !!process.env.VERCEL;
 let db: any;
 
-if (isTurso) {
-  const url = process.env.TURSO_DATABASE_URL || process.env.TURSO_URL;
-  console.log('Using Turso Database:', url);
-  const client = createClient({
-    url: url!,
-    authToken: process.env.TURSO_AUTH_TOKEN,
+let url = (process.env.TURSO_DATABASE_URL || process.env.TURSO_URL || (isVercel ? 'file:/tmp/database.db' : 'file:database.db')).trim().replace(/['"]/g, '');
+const authToken = (process.env.TURSO_AUTH_TOKEN || '').trim().replace(/['"]/g, '');
+
+// Ensure Turso URL has a protocol
+if (isTurso && !url.startsWith('libsql://') && !url.startsWith('https://') && !url.startsWith('http://')) {
+  url = `libsql://${url}`;
+}
+
+const client = createClient({
+  url: url!,
+  authToken: authToken,
+});
+
+const normalizeRows = (rows: any[]) => {
+  return rows.map(row => {
+    const normalized: any = {};
+    for (const key in row) {
+      if (typeof row[key] === 'bigint') {
+        normalized[key] = Number(row[key]);
+      } else {
+        normalized[key] = row[key];
+      }
+    }
+    return normalized;
   });
+};
 
-  const normalizeRows = (rows: any[]) => {
-    return rows.map(row => {
-      const normalized: any = {};
-      for (const key in row) {
-        if (typeof row[key] === 'bigint') {
-          normalized[key] = Number(row[key]);
-        } else {
-          normalized[key] = row[key];
-        }
-      }
-      return normalized;
-    });
-  };
-
-  // Wrapper for Turso to mimic better-sqlite3 basic API
-  db = {
-    exec: async (sql: string) => {
-      const statements = sql.split(';').filter(s => s.trim());
-      for (const s of statements) {
-        await client.execute(s);
-      }
+// Wrapper for LibSQL to mimic better-sqlite3 basic API
+db = {
+  exec: async (sql: string) => {
+    const statements = sql.split(';').filter(s => s.trim());
+    for (const s of statements) {
+      await client.execute(s);
+    }
+  },
+  prepare: (sql: string) => ({
+    run: async (...args: any[]) => {
+      const res = await client.execute({ sql, args });
+      return { 
+        lastInsertRowid: (res.lastInsertRowid !== undefined && res.lastInsertRowid !== null) 
+          ? Number(res.lastInsertRowid) 
+          : null 
+      };
     },
-    prepare: (sql: string) => ({
-      run: async (...args: any[]) => {
-        const res = await client.execute({ sql, args });
-        return { 
-          lastInsertRowid: (res.lastInsertRowid !== undefined && res.lastInsertRowid !== null) 
-            ? Number(res.lastInsertRowid) 
-            : null 
-        };
-      },
-      get: async (...args: any[]) => {
-        const res = await client.execute({ sql, args });
-        if (!res.rows[0]) return null;
-        return normalizeRows([res.rows[0]])[0];
-      },
-      all: async (...args: any[]) => {
-        const res = await client.execute({ sql, args });
-        return normalizeRows(res.rows);
-      }
-    }),
-    pragma: async (sql: string) => {
+    get: async (...args: any[]) => {
+      const res = await client.execute({ sql, args });
+      if (!res.rows[0]) return null;
+      return normalizeRows([res.rows[0]])[0];
+    },
+    all: async (...args: any[]) => {
+      const res = await client.execute({ sql, args });
+      return normalizeRows(res.rows);
+    }
+  }),
+  pragma: async (sql: string) => {
+    try {
       const res = await client.execute(`PRAGMA ${sql}`);
       const row = res.rows[0];
       if (!row) return null;
       const val = Object.values(row)[0];
       return typeof val === 'bigint' ? Number(val) : val;
+    } catch (e) {
+      console.warn(`PRAGMA ${sql} not supported or failed:`, e);
+      return null;
     }
-  };
-} else {
-  console.log('Using Local SQLite');
-  const localDb = new Database('database.db');
-  localDb.pragma('foreign_keys = ON');
-  
-  // Wrapper to make it async-compatible with the Turso wrapper
-  db = {
-    exec: (sql: string) => Promise.resolve(localDb.exec(sql)),
-    prepare: (sql: string) => {
-      const stmt = localDb.prepare(sql);
-      return {
-        run: (...args: any[]) => {
-          const res = stmt.run(...args);
-          return Promise.resolve({ lastInsertRowid: Number(res.lastInsertRowid) });
-        },
-        get: (...args: any[]) => Promise.resolve(stmt.get(...args)),
-        all: (...args: any[]) => Promise.resolve(stmt.all(...args))
-      };
-    },
-    pragma: (sql: string) => Promise.resolve(localDb.pragma(sql, { simple: true }))
-  };
-}
+  }
+};
 
-// Initialize Database
+let dbInitialized = false;
 const initDb = async () => {
+  if (dbInitialized) return;
   console.log('Initializing database tables...');
   try {
     await db.exec(`
@@ -139,26 +127,28 @@ const initDb = async () => {
         FOREIGN KEY (type_id) REFERENCES service_types (id) ON DELETE SET NULL
       );
     `);
-    console.log('Tables initialized successfully');
+    
+    // Migration: Add coat_of_arms if missing
+    try {
+      const columns = await db.prepare("PRAGMA table_info(users)").all();
+      if (columns && Array.isArray(columns) && !columns.find((c: any) => c.name === 'coat_of_arms')) {
+        await db.exec("ALTER TABLE users ADD COLUMN coat_of_arms TEXT");
+      }
+    } catch (e) {
+      console.error("Migration error:", e);
+    }
+
+    dbInitialized = true;
+    console.log('Database initialized successfully');
   } catch (error) {
     console.error('Error in initDb:', error);
     throw error;
   }
-
-  // Migration: Add coat_of_arms if missing
-  try {
-    if (!isTurso) {
-      const columns = await db.prepare("PRAGMA table_info(users)").all();
-      if (!columns.find((c: any) => c.name === 'coat_of_arms')) {
-        await db.exec("ALTER TABLE users ADD COLUMN coat_of_arms TEXT");
-      }
-    }
-  } catch (e) {
-    console.error("Migration error:", e);
-  }
 };
 
 const app = express();
+export default app;
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
@@ -189,8 +179,10 @@ const authenticateToken = (req: any, res: any, next: any) => {
 
 // --- API Routes ---
 
+// Health Check with DB Status
 app.get('/api/health', async (req, res) => {
   try {
+    await initDb();
     const fkStatus = await db.pragma('foreign_keys');
     const userCount = await db.prepare('SELECT COUNT(*) as count FROM users').get();
     const typeCount = await db.prepare('SELECT COUNT(*) as count FROM service_types').get();
@@ -199,6 +191,7 @@ app.get('/api/health', async (req, res) => {
       status: 'ok', 
       time: new Date().toISOString(),
       db: isTurso ? 'turso' : 'local',
+      vercel: isVercel,
       foreign_keys: fkStatus === 1 || fkStatus === 'on' ? 'enabled' : 'disabled',
       counts: {
         users: userCount?.count || 0,
@@ -206,7 +199,13 @@ app.get('/api/health', async (req, res) => {
       }
     });
   } catch (e: any) {
-    res.json({ status: 'error', message: 'DB connection failed', error: e.message });
+    console.error('Health check failed:', e);
+    res.status(500).json({ 
+      status: 'error', 
+      message: 'DB connection failed', 
+      error: e.message,
+      stack: process.env.NODE_ENV === 'production' ? undefined : e.stack
+    });
   }
 });
 
@@ -214,6 +213,7 @@ app.get('/api/health', async (req, res) => {
 app.post('/api/auth/register', async (req, res) => {
   const { name, email, password } = req.body;
   try {
+    await initDb();
     const hashedPassword = await bcrypt.hash(password, 10);
     const stmt = db.prepare('INSERT INTO users (name, email, password) VALUES (?, ?, ?)');
     const info = await stmt.run(name, email, hashedPassword);
@@ -243,6 +243,7 @@ app.post('/api/auth/register', async (req, res) => {
 app.post('/api/auth/login', async (req, res) => {
   console.log('Login attempt:', req.body?.email);
   try {
+    await initDb(); // Ensure DB is ready
     const { email, password } = req.body;
     if (!email || !password) {
       console.log('Login failed: Missing email or password');
@@ -252,8 +253,16 @@ app.post('/api/auth/login', async (req, res) => {
     const user: any = await db.prepare('SELECT * FROM users WHERE email = ?').get(email);
     console.log('User found:', !!user);
 
-    if (!user || !(await bcrypt.compare(password, user.password))) {
-      console.log('Login failed: Invalid credentials');
+    if (!user) {
+      console.log('Login failed: User not found');
+      return res.status(401).json({ error: 'Credenciais inválidas' });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    console.log('Password match:', isMatch);
+
+    if (!isMatch) {
+      console.log('Login failed: Invalid password');
       return res.status(401).json({ error: 'Credenciais inválidas' });
     }
 
@@ -438,27 +447,16 @@ app.get('/api/stats', authenticateToken, async (req: any, res) => {
 async function startServer() {
   console.log('Starting server...');
   
-  // Test bcrypt
-  try {
-    const salt = await bcrypt.genSalt(10);
-    const hash = await bcrypt.hash('test', salt);
-    const match = await bcrypt.compare('test', hash);
-    console.log('Bcrypt test:', match ? 'SUCCESS' : 'FAILED');
-  } catch (e) {
-    console.error('Bcrypt test error:', e);
-  }
-
   try {
     await initDb();
-    console.log('Database initialized successfully');
   } catch (e) {
-    console.error('Failed to initialize database:', e);
-    // Continue starting server even if DB fails, so we can at least see the health page or errors
+    console.error('Initial DB sync failed:', e);
   }
 
   if (process.env.NODE_ENV !== 'production') {
     console.log('Starting in development mode with Vite middleware');
     try {
+      const { createServer: createViteServer } = await import('vite');
       const vite = await createViteServer({
         server: { middlewareMode: true },
         appType: 'spa',
@@ -495,18 +493,13 @@ async function startServer() {
     }
   } else {
     console.log('Starting in production mode');
-    app.use(express.static(path.join(__dirname, 'dist')));
+    const distPath = path.join(__dirname, 'dist');
+    app.use(express.static(distPath));
     app.get('*', (req, res) => {
-      res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+      if (req.path.startsWith('/api')) return res.status(404).json({ error: 'API route not found' });
+      res.sendFile(path.join(distPath, 'index.html'));
     });
   }
-
-  const PORT = 3000;
-  
-  // API 404 Handler (placed before SPA fallback)
-  app.use('/api', (req, res) => {
-    res.status(404).json({ error: `Rota API não encontrada: ${req.method} ${req.originalUrl}` });
-  });
 
   // Global Error Handler for API
   app.use((err: any, req: any, res: any, next: any) => {
@@ -514,28 +507,19 @@ async function startServer() {
       console.error(`API Error [${req.method} ${req.path}]:`, err);
       return res.status(err.status || 500).json({ 
         error: err.message || 'Erro interno no servidor',
-        code: err.code,
-        details: process.env.NODE_ENV !== 'production' ? err.stack : undefined
+        code: err.code
       });
     }
     next(err);
   });
 
-  // Final Error Handler
-  app.use((err: any, req: any, res: any, next: any) => {
-    console.error('FINAL ERROR HANDLER:', err);
-    if (res.headersSent) {
-      return next(err);
-    }
-    res.status(500).json({ 
-      error: err.message || 'Erro interno do servidor',
-      stack: process.env.NODE_ENV === 'production' ? undefined : err.stack
+  // Only listen if not on Vercel
+  if (!isVercel) {
+    const PORT = 3000;
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`Servidor rodando em http://localhost:${PORT}`);
     });
-  });
-
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Servidor rodando em http://localhost:${PORT}`);
-  });
+  }
 }
 
 startServer();
