@@ -24,7 +24,9 @@ export const sendNotification = (title: string, options?: NotificationOptions) =
     });
     
     // Play sound
-    const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+    const customSound = localStorage.getItem('alert_sound');
+    const defaultSound = 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3';
+    const audio = new Audio(customSound || defaultSound);
     audio.play().catch(e => console.log('Erro ao tocar som:', e));
   }
 };
