@@ -80,6 +80,14 @@ body {
   background-color: #1a1a1a;
 }
 
+.calendar-day.has-service {
+  transition: all 0.2s ease;
+}
+
+.calendar-day.has-service:hover {
+  filter: brightness(1.2);
+}
+
 .calendar-day.today .day-number {
   background-color: var(--accent);
   color: white;

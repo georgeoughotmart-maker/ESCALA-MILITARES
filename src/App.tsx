@@ -173,6 +173,7 @@ export default function App() {
           <Route path="/calendar" element={
             <Calendar 
               services={services} 
+              serviceTypes={serviceTypes}
               onAddService={(date) => { setInitialDate(date); setEditingService(null); setIsFormOpen(true); }} 
               onEditService={(service) => { setEditingService(service); setIsFormOpen(true); }}
               onDeleteService={handleDeleteService}

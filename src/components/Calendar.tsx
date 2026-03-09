@@ -2,16 +2,17 @@ import React, { useState } from 'react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight, Plus, Trash2 } from 'lucide-react';
-import { Service } from '../types';
+import { Service, ServiceType } from '../types';
 
 interface CalendarProps {
   services: Service[];
+  serviceTypes: ServiceType[];
   onAddService: (date: Date) => void;
   onEditService: (service: Service) => void;
   onDeleteService: (id: number) => void;
 }
 
-export default function Calendar({ services, onAddService, onEditService, onDeleteService }: CalendarProps) {
+export default function Calendar({ services, serviceTypes, onAddService, onEditService, onDeleteService }: CalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
 
   const monthStart = startOfMonth(currentDate);
@@ -64,12 +65,17 @@ export default function Calendar({ services, onAddService, onEditService, onDele
           const dayServices = getServicesForDay(day);
           const isToday = isSameDay(day, new Date());
           const isCurrentMonth = isSameMonth(day, monthStart);
+          const primaryService = dayServices[0];
 
           return (
             <div 
               key={i} 
-              className={`calendar-day ${!isCurrentMonth ? 'other-month' : ''} ${isToday ? 'today' : ''}`}
+              className={`calendar-day group relative ${!isCurrentMonth ? 'other-month' : ''} ${isToday ? 'today' : ''} ${primaryService ? 'has-service' : ''}`}
               onClick={() => onAddService(day)}
+              style={primaryService ? { 
+                backgroundColor: `${primaryService.type_color}15`,
+                borderLeft: `3px solid ${primaryService.type_color}`
+              } : undefined}
             >
               <div className="flex justify-between items-start mb-1">
                 <span className={`day-number text-sm font-medium ${isToday ? 'text-white' : 'text-neutral-400'}`}>
@@ -111,19 +117,13 @@ export default function Calendar({ services, onAddService, onEditService, onDele
       </div>
 
       {/* Legend */}
-      <div className="flex flex-wrap gap-4 pt-4">
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-          <span className="text-xs text-neutral-500">Ordinário</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-green-500"></div>
-          <span className="text-xs text-neutral-500">PJES</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-amber-500"></div>
-          <span className="text-xs text-neutral-500">Diária</span>
-        </div>
+      <div className="flex flex-wrap gap-4 pt-4 border-t border-[#262626]">
+        {serviceTypes.map(type => (
+          <div key={type.id} className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: type.color }}></div>
+            <span className="text-xs text-neutral-400">{type.name}</span>
+          </div>
+        ))}
       </div>
     </div>
   );
