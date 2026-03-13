@@ -53,6 +53,7 @@ export default function Dashboard({ stats, recentServices, selectedMonth, onMont
         <div>
           <h2 className="text-2xl font-bold text-white">Dashboard</h2>
           <p className="text-neutral-500">Resumo do seu serviço em {last12Months.find(m => m.value === selectedMonth)?.label}</p>
+          <p className="text-[10px] text-blue-500/60 uppercase tracking-widest mt-1">Acompanhe seus ganhos e produtividade mensal</p>
         </div>
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <select
@@ -78,6 +79,7 @@ export default function Dashboard({ stats, recentServices, selectedMonth, onMont
           value={`R$ ${(monthly.total_value || 0).toFixed(2)}`} 
           color="text-green-500" 
           bg="bg-green-500/10"
+          tooltip="Soma total dos valores de todos os serviços realizados neste mês."
         />
         <StatCard 
           icon={Clock} 
@@ -85,6 +87,7 @@ export default function Dashboard({ stats, recentServices, selectedMonth, onMont
           value={`${(monthly.total_hours || 0).toFixed(1)}h`} 
           color="text-blue-500" 
           bg="bg-blue-500/10"
+          tooltip="Total de horas acumuladas com base na carga horária dos serviços."
         />
         <StatCard 
           icon={CalendarIcon} 
@@ -92,6 +95,7 @@ export default function Dashboard({ stats, recentServices, selectedMonth, onMont
           value={monthly.total_services.toString()} 
           color="text-purple-500" 
           bg="bg-purple-500/10"
+          tooltip="Quantidade total de escalas e serviços registrados no mês."
         />
       </div>
 
@@ -278,9 +282,9 @@ export default function Dashboard({ stats, recentServices, selectedMonth, onMont
   );
 }
 
-function StatCard({ icon: Icon, label, value, color, bg }: any) {
+function StatCard({ icon: Icon, label, value, color, bg, tooltip }: any) {
   return (
-    <div className="bg-[#171717] border border-[#262626] rounded-2xl p-6 flex items-center gap-4">
+    <div className="bg-[#171717] border border-[#262626] rounded-2xl p-6 flex items-center gap-4 group relative">
       <div className={`w-12 h-12 ${bg} rounded-xl flex items-center justify-center ${color}`}>
         <Icon size={24} />
       </div>
@@ -288,6 +292,11 @@ function StatCard({ icon: Icon, label, value, color, bg }: any) {
         <p className="text-xs font-medium text-neutral-500 uppercase tracking-wider">{label}</p>
         <p className="text-2xl font-bold text-white">{value}</p>
       </div>
+      {tooltip && (
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2 bg-black text-[10px] text-neutral-400 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 border border-[#262626] text-center">
+          {tooltip}
+        </div>
+      )}
     </div>
   );
 }

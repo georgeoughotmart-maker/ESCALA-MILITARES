@@ -120,6 +120,7 @@ export default function Settings({ user, serviceTypes, onAddType, onUpdateType, 
           <UserIcon size={18} className="text-blue-500" />
           Perfil e Identidade
         </h3>
+        <p className="text-xs text-neutral-500 -mt-4">Defina seu nome de guerra e o brasão da sua corporação para personalizar o app.</p>
         
         <div className="flex flex-col md:flex-row gap-8 items-start">
           <div className="flex flex-col items-center gap-4">
@@ -172,6 +173,7 @@ export default function Settings({ user, serviceTypes, onAddType, onUpdateType, 
           <Volume2 size={18} className="text-blue-500" />
           Notificações e Alertas
         </h3>
+        <p className="text-xs text-neutral-500 -mt-4">Escolha o som que será reproduzido nos lembretes de serviço.</p>
         
         <div className="space-y-4">
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between p-4 bg-[#0a0a0a] border border-[#262626] rounded-xl">
@@ -231,7 +233,10 @@ export default function Settings({ user, serviceTypes, onAddType, onUpdateType, 
 
       <section className="space-y-4">
         <div className="flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-white">Tipos de Serviço</h3>
+          <div>
+            <h3 className="text-lg font-semibold text-white">Tipos de Serviço</h3>
+            <p className="text-xs text-neutral-500">Gerencie as categorias de serviço (ex: Ordinário, PJES, Diária).</p>
+          </div>
           <button 
             onClick={() => setIsAdding(true)}
             className="flex items-center gap-2 text-sm font-medium text-blue-500 hover:text-blue-400 transition-colors"

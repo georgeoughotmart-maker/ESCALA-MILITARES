@@ -73,6 +73,7 @@ export default function ServiceForm({ service, serviceTypes, initialDate, onClos
         <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
           <div className="space-y-1">
             <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Tipo de Serviço</label>
+            <p className="text-[10px] text-neutral-500 mb-1">Selecione a categoria da sua escala ou serviço</p>
             {hasTypes ? (
               <select
                 value={formData.type_id}
@@ -123,8 +124,10 @@ export default function ServiceForm({ service, serviceTypes, initialDate, onClos
                   value={formData.value}
                   onChange={(e) => setFormData({ ...formData, value: Number(e.target.value) })}
                   className="w-full bg-[#0a0a0a] border border-[#262626] rounded-xl py-3 pl-10 pr-4 text-white focus:border-blue-500 outline-none transition-all"
+                  placeholder="0,00"
                 />
               </div>
+              <p className="text-[9px] text-neutral-600">Valor que você receberá por este serviço</p>
             </div>
           </div>
 
@@ -174,7 +177,10 @@ export default function ServiceForm({ service, serviceTypes, initialDate, onClos
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Bell size={18} className="text-blue-500" />
-                <span className="text-sm font-medium text-white">Ativar Lembrete</span>
+                <div>
+                  <span className="text-sm font-medium text-white block">Ativar Lembrete</span>
+                  <span className="text-[10px] text-neutral-500">Receba um alerta antes do serviço</span>
+                </div>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input 

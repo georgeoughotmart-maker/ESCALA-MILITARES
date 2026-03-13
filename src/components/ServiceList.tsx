@@ -70,6 +70,7 @@ export default function ServiceList({ services, onEdit, onDelete }: ServiceListP
         <div>
           <h2 className="text-2xl font-bold text-white">Serviços</h2>
           <p className="text-neutral-500">{filteredServices.length} registros encontrados</p>
+          <p className="text-[10px] text-blue-500/60 uppercase tracking-widest mt-1">Visualize e gerencie seu histórico detalhado de escalas</p>
         </div>
         <button 
           onClick={exportToPDF}

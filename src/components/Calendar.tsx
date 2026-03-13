@@ -41,6 +41,7 @@ export default function Calendar({ services, serviceTypes, onAddService, onEditS
         <div>
           <h2 className="text-2xl font-bold text-white">Calendário</h2>
           <p className="text-neutral-500 capitalize">{format(currentDate, 'MMMM yyyy', { locale: ptBR })}</p>
+          <p className="text-[10px] text-blue-500/60 uppercase tracking-widest mt-1">Dica: Clique em um dia para adicionar um novo serviço</p>
         </div>
         <div className="flex items-center gap-2 bg-[#171717] border border-[#262626] rounded-xl p-1">
           <button onClick={prevMonth} className="p-2 hover:bg-neutral-800 rounded-lg text-neutral-400 transition-colors">
