@@ -30,9 +30,20 @@ export default function Settings({ user, serviceTypes, onAddType, onUpdateType, 
     default_workload: '24h'
   });
 
+  useEffect(() => {
+    setProfileData({
+      name: user.name,
+      coat_of_arms: user.coat_of_arms || ''
+    });
+  }, [user]);
+
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (file.size > 1024 * 1024) {
+        alert('A imagem é muito grande. Escolha uma imagem de até 1MB.');
+        return;
+      }
       const reader = new FileReader();
       reader.onloadend = () => {
         setProfileData(prev => ({ ...prev, coat_of_arms: reader.result as string }));

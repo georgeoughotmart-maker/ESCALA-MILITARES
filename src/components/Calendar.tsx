@@ -56,8 +56,9 @@ export default function Calendar({ services, serviceTypes, onAddService, onEditS
         </div>
       </header>
 
-      <div className="calendar-grid">
-        {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(day => (
+      <div className="overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
+        <div className="calendar-grid min-w-[600px] sm:min-w-0">
+          {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(day => (
           <div key={day} className="bg-[#171717] p-2 text-center text-[10px] font-bold uppercase tracking-widest text-neutral-500 border-b border-[#262626]">
             {day}
           </div>
@@ -116,6 +117,7 @@ export default function Calendar({ services, serviceTypes, onAddService, onEditS
           );
         })}
       </div>
+    </div>
 
       {/* Legend */}
       <div className="flex flex-wrap gap-4 pt-4 border-t border-[#262626]">
