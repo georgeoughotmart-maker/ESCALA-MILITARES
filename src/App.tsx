@@ -9,7 +9,6 @@ import Calendar from './components/Calendar';
 import ServiceList from './components/ServiceList';
 import Settings from './components/Settings';
 import ServiceForm from './components/ServiceForm';
-import { requestNotificationPermission, checkReminders } from './lib/notifications';
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -31,8 +30,6 @@ export default function App() {
     } else {
       setLoading(false);
     }
-    
-    requestNotificationPermission();
   }, []);
 
   useEffect(() => {
@@ -40,15 +37,6 @@ export default function App() {
       fetchData(selectedMonth);
     }
   }, [selectedMonth]);
-
-  useEffect(() => {
-    if (services.length > 0) {
-      const interval = setInterval(() => {
-        checkReminders(services);
-      }, 30000); // Check every 30 seconds
-      return () => clearInterval(interval);
-    }
-  }, [services]);
 
   const fetchData = async (month?: string) => {
     try {

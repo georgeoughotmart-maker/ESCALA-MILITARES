@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Palette, Clock, DollarSign, Save, X, Upload, User as UserIcon, Music, Play, Volume2 } from 'lucide-react';
+import { Plus, Edit2, Trash2, Palette, Clock, DollarSign, Save, X, Upload, User as UserIcon } from 'lucide-react';
 import { ServiceType, User } from '../types';
 
 interface SettingsProps {
@@ -17,7 +17,6 @@ export default function Settings({ user, serviceTypes, onAddType, onUpdateType, 
   const [saving, setSaving] = useState(false);
   const [profileData, setProfileData] = useState({
     name: user.name,
-    phone: user.phone || '',
     coat_of_arms: user.coat_of_arms || ''
   });
   const [alertSound, setAlertSound] = useState<string | null>(localStorage.getItem('alert_sound'));
@@ -34,7 +33,6 @@ export default function Settings({ user, serviceTypes, onAddType, onUpdateType, 
   useEffect(() => {
     setProfileData({
       name: user.name,
-      phone: user.phone || '',
       coat_of_arms: user.coat_of_arms || ''
     });
   }, [user]);
@@ -170,19 +168,6 @@ export default function Settings({ user, serviceTypes, onAddType, onUpdateType, 
                 className="w-full bg-[#0a0a0a] border border-[#262626] rounded-xl py-3 px-4 text-white focus:border-blue-500 outline-none transition-all"
               />
             </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Celular para Alertas</label>
-              <input 
-                type="tel" 
-                value={profileData.phone}
-                onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
-                className="w-full bg-[#0a0a0a] border border-[#262626] rounded-xl py-3 px-4 text-white focus:border-blue-500 outline-none transition-all"
-                placeholder="Ex: 5511999999999"
-              />
-              <p className="text-[10px] text-neutral-500">Insira o número com DDD (apenas números). Ex: 5511999999999</p>
-            </div>
-
             <button
               onClick={handleSaveProfile}
               disabled={saving}
@@ -194,69 +179,6 @@ export default function Settings({ user, serviceTypes, onAddType, onUpdateType, 
         </div>
       </section>
       
-      <section className="bg-[#171717] border border-[#262626] rounded-2xl p-6 space-y-6">
-        <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-          <Volume2 size={18} className="text-blue-500" />
-          Notificações e Alertas
-        </h3>
-        <p className="text-xs text-neutral-500 -mt-4">Escolha o som que será reproduzido nos lembretes de serviço.</p>
-        
-        <div className="space-y-4">
-          <div className="flex flex-col md:flex-row gap-4 items-center justify-between p-4 bg-[#0a0a0a] border border-[#262626] rounded-xl">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-blue-600/10 rounded-xl flex items-center justify-center text-blue-500">
-                <Music size={24} />
-              </div>
-              <div>
-                <p className="text-sm font-bold text-white">Som do Alerta</p>
-                <p className="text-xs text-neutral-500">
-                  {alertSound ? 'Personalizado (MP3)' : 'Padrão do Sistema'}
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-2 w-full md:w-auto">
-              <button
-                onClick={testSound}
-                className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-neutral-800 hover:bg-neutral-700 text-white text-sm font-bold py-2 px-4 rounded-lg transition-all"
-              >
-                <Play size={16} /> Testar
-              </button>
-              
-              <button
-                onClick={() => soundInputRef.current?.click()}
-                className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold py-2 px-4 rounded-lg transition-all"
-              >
-                <Upload size={16} /> Alterar MP3
-              </button>
-              
-              {alertSound && (
-                <button
-                  onClick={resetSound}
-                  className="p-2 text-neutral-500 hover:text-red-500 transition-colors"
-                  title="Restaurar Padrão"
-                >
-                  <Trash2 size={18} />
-                </button>
-              )}
-            </div>
-          </div>
-          
-          <input 
-            type="file" 
-            ref={soundInputRef} 
-            onChange={handleSoundUpload} 
-            accept="audio/mpeg,audio/mp3" 
-            className="hidden" 
-          />
-          
-          <p className="text-[10px] text-neutral-500 text-center md:text-left">
-            * O som será reproduzido quando um lembrete de serviço for ativado. 
-            Certifique-se de que as notificações do navegador estão permitidas.
-          </p>
-        </div>
-      </section>
-
       <section className="space-y-4">
         <div className="flex justify-between items-center">
           <div>
