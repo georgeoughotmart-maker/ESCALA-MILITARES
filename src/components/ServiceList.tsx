@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Search, Filter, Download, Calendar as CalendarIcon, DollarSign, Clock, MoreVertical, Edit2, Trash2, FileDown } from 'lucide-react';
+import { Search, Filter, Calendar as CalendarIcon, DollarSign, Clock, Edit2, Trash2 } from 'lucide-react';
 import { Service } from '../types';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
 
 interface ServiceListProps {
   services: Service[];
@@ -23,47 +21,6 @@ export default function ServiceList({ services, onEdit, onDelete }: ServiceListP
     return matchesSearch && matchesType;
   });
 
-  const exportToPDF = () => {
-    const doc = new jsPDF() as any;
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    
-    // Add Coat of Arms if exists
-    if (user.coat_of_arms) {
-      try {
-        doc.addImage(user.coat_of_arms, 'PNG', 14, 10, 20, 20);
-      } catch (e) {
-        console.error('Erro ao adicionar brasão ao PDF', e);
-      }
-    }
-
-    doc.setFontSize(18);
-    doc.text('Relatório de Escala de Serviço', user.coat_of_arms ? 40 : 14, 22);
-    doc.setFontSize(10);
-    doc.setTextColor(100);
-    doc.text(`Militar: ${user.name || 'Não identificado'}`, user.coat_of_arms ? 40 : 14, 28);
-    
-    const tableData = filteredServices.map(s => [
-      format(parseISO(s.date), 'dd/MM/yyyy'),
-      s.type_name,
-      `${s.start_time} - ${s.end_time}`,
-      `R$ ${(s.value || 0).toFixed(2)}`,
-      s.notes || ''
-    ]);
-
-    doc.autoTable({
-      head: [['Data', 'Tipo', 'Horário', 'Valor', 'Observações']],
-      body: tableData,
-      startY: 35,
-      theme: 'grid',
-      headStyles: { fillColor: [59, 130, 246] }
-    });
-
-    const total = filteredServices.reduce((acc, s) => acc + (s.value || 0), 0);
-    doc.text(`Total Acumulado: R$ ${(total || 0).toFixed(2)}`, 14, doc.lastAutoTable.finalY + 10);
-    
-    doc.save('relatorio-escala.pdf');
-  };
-
   return (
     <div className="space-y-6">
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -72,13 +29,6 @@ export default function ServiceList({ services, onEdit, onDelete }: ServiceListP
           <p className="text-neutral-500">{filteredServices.length} registros encontrados</p>
           <p className="text-[10px] text-blue-500/60 uppercase tracking-widest mt-1">Visualize e gerencie seu histórico detalhado de escalas</p>
         </div>
-        <button 
-          onClick={exportToPDF}
-          className="bg-[#171717] border border-[#262626] text-white px-4 py-2 rounded-xl flex items-center gap-2 hover:bg-neutral-800 transition-colors"
-        >
-          <FileDown size={18} />
-          Exportar PDF
-        </button>
       </header>
 
       {/* Filters */}

@@ -179,7 +179,7 @@ export default function ServiceForm({ service, serviceTypes, initialDate, onClos
                 <Bell size={18} className="text-blue-500" />
                 <div>
                   <span className="text-sm font-medium text-white block">Ativar Lembrete</span>
-                  <span className="text-[10px] text-neutral-500">Receba um alerta antes do serviço</span>
+                  <span className="text-[10px] text-neutral-500">Receba um alerta via SMS/WhatsApp no celular cadastrado</span>
                 </div>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">

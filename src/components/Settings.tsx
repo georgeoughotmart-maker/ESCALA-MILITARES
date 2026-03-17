@@ -17,6 +17,7 @@ export default function Settings({ user, serviceTypes, onAddType, onUpdateType, 
   const [saving, setSaving] = useState(false);
   const [profileData, setProfileData] = useState({
     name: user.name,
+    phone: user.phone || '',
     coat_of_arms: user.coat_of_arms || ''
   });
   const [alertSound, setAlertSound] = useState<string | null>(localStorage.getItem('alert_sound'));
@@ -33,6 +34,7 @@ export default function Settings({ user, serviceTypes, onAddType, onUpdateType, 
   useEffect(() => {
     setProfileData({
       name: user.name,
+      phone: user.phone || '',
       coat_of_arms: user.coat_of_arms || ''
     });
   }, [user]);
@@ -168,6 +170,19 @@ export default function Settings({ user, serviceTypes, onAddType, onUpdateType, 
                 className="w-full bg-[#0a0a0a] border border-[#262626] rounded-xl py-3 px-4 text-white focus:border-blue-500 outline-none transition-all"
               />
             </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Celular para Alertas</label>
+              <input 
+                type="tel" 
+                value={profileData.phone}
+                onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
+                className="w-full bg-[#0a0a0a] border border-[#262626] rounded-xl py-3 px-4 text-white focus:border-blue-500 outline-none transition-all"
+                placeholder="Ex: 5511999999999"
+              />
+              <p className="text-[10px] text-neutral-500">Insira o número com DDD (apenas números). Ex: 5511999999999</p>
+            </div>
+
             <button
               onClick={handleSaveProfile}
               disabled={saving}

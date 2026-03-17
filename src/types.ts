@@ -2,6 +2,7 @@ export interface User {
   id: number;
   name: string;
   email: string;
+  phone?: string;
   coat_of_arms?: string;
 }
 
@@ -25,6 +26,7 @@ export interface Service {
   notes: string | null;
   reminder_enabled: boolean;
   reminder_before_hours: number;
+  reminder_sent?: boolean;
   type_name?: string;
   type_color?: string;
 }

@@ -97,6 +97,7 @@ const initDb = async () => {
         name TEXT NOT NULL,
         email TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL,
+        phone TEXT,
         coat_of_arms TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
       );
@@ -122,6 +123,7 @@ const initDb = async () => {
         notes TEXT,
         reminder_enabled INTEGER DEFAULT 0,
         reminder_before_hours INTEGER DEFAULT 1,
+        reminder_sent INTEGER DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
         FOREIGN KEY (type_id) REFERENCES service_types (id) ON DELETE SET NULL
@@ -131,8 +133,20 @@ const initDb = async () => {
     // Migration: Add coat_of_arms if missing
     try {
       const columns = await db.prepare("PRAGMA table_info(users)").all();
-      if (columns && Array.isArray(columns) && !columns.find((c: any) => c.name === 'coat_of_arms')) {
-        await db.exec("ALTER TABLE users ADD COLUMN coat_of_arms TEXT");
+      if (columns && Array.isArray(columns)) {
+        if (!columns.find((c: any) => c.name === 'coat_of_arms')) {
+          await db.exec("ALTER TABLE users ADD COLUMN coat_of_arms TEXT");
+        }
+        if (!columns.find((c: any) => c.name === 'phone')) {
+          await db.exec("ALTER TABLE users ADD COLUMN phone TEXT");
+        }
+      }
+      
+      const serviceColumns = await db.prepare("PRAGMA table_info(services)").all();
+      if (serviceColumns && Array.isArray(serviceColumns)) {
+        if (!serviceColumns.find((c: any) => c.name === 'reminder_sent')) {
+          await db.exec("ALTER TABLE services ADD COLUMN reminder_sent INTEGER DEFAULT 0");
+        }
       }
     } catch (e) {
       console.error("Migration error:", e);
@@ -271,7 +285,7 @@ app.post('/api/auth/login', async (req, res) => {
 
     const token = jwt.sign({ id: user.id, name: user.name, email: user.email }, JWT_SECRET);
     console.log('Login successful for:', email);
-    res.json({ token, user: { id: user.id, name: user.name, email: user.email, coat_of_arms: user.coat_of_arms } });
+    res.json({ token, user: { id: user.id, name: user.name, email: user.email, phone: user.phone, coat_of_arms: user.coat_of_arms } });
   } catch (error: any) {
     console.error('Login error:', error);
     res.status(500).json({ error: 'Erro ao fazer login: ' + error.message });
@@ -280,9 +294,9 @@ app.post('/api/auth/login', async (req, res) => {
 
 // User Profile
 app.put('/api/user/profile', authenticateToken, async (req: any, res) => {
-  const { name, coat_of_arms } = req.body;
-  await db.prepare('UPDATE users SET name = ?, coat_of_arms = ? WHERE id = ?')
-    .run(name, coat_of_arms, req.user.id);
+  const { name, phone, coat_of_arms } = req.body;
+  await db.prepare('UPDATE users SET name = ?, phone = ?, coat_of_arms = ? WHERE id = ?')
+    .run(name, phone, coat_of_arms, req.user.id);
   res.json({ message: 'Perfil atualizado' });
 });
 
@@ -444,6 +458,45 @@ app.get('/api/stats', authenticateToken, async (req: any, res) => {
     nextService
   });
 });
+
+// --- Reminder Service ---
+const checkReminders = async () => {
+  try {
+    if (!dbInitialized) return;
+    
+    const now = new Date();
+    const services = await db.prepare(`
+      SELECT s.*, u.phone, u.name as user_name, st.name as type_name
+      FROM services s
+      JOIN users u ON s.user_id = u.id
+      JOIN service_types st ON s.type_id = st.id
+      WHERE s.reminder_enabled = 1 
+      AND s.reminder_sent = 0
+      AND u.phone IS NOT NULL
+      AND u.phone != ''
+    `).all();
+
+    for (const service of services) {
+      const serviceDateTime = new Date(`${service.date}T${service.start_time || '00:00'}`);
+      const reminderTime = new Date(serviceDateTime.getTime() - (service.reminder_before_hours * 60 * 60 * 1000));
+      
+      if (now >= reminderTime && now < serviceDateTime) {
+        console.log(`[REMINDER] Sending alert to ${service.phone} for service ${service.type_name} at ${service.date} ${service.start_time}`);
+        
+        // Here you would integrate Twilio or another SMS/WhatsApp API
+        // Example:
+        // await sendSMS(service.phone, `Olá ${service.user_name}, lembrete de serviço: ${service.type_name} hoje às ${service.start_time}.`);
+        
+        await db.prepare('UPDATE services SET reminder_sent = 1 WHERE id = ?').run(service.id);
+      }
+    }
+  } catch (error) {
+    console.error('Error in checkReminders:', error);
+  }
+};
+
+// Check every minute
+setInterval(checkReminders, 60000);
 
 // --- Vite Integration ---
 
