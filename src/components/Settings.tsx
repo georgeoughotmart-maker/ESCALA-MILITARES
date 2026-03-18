@@ -17,6 +17,7 @@ export default function Settings({ user, serviceTypes, onAddType, onUpdateType, 
   const [saving, setSaving] = useState(false);
   const [profileData, setProfileData] = useState({
     name: user.name,
+    phone: user.phone || '',
     coat_of_arms: user.coat_of_arms || ''
   });
   const [alertSound, setAlertSound] = useState<string | null>(localStorage.getItem('alert_sound'));
@@ -33,6 +34,7 @@ export default function Settings({ user, serviceTypes, onAddType, onUpdateType, 
   useEffect(() => {
     setProfileData({
       name: user.name,
+      phone: user.phone || '',
       coat_of_arms: user.coat_of_arms || ''
     });
   }, [user]);
@@ -40,8 +42,8 @@ export default function Settings({ user, serviceTypes, onAddType, onUpdateType, 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 1024 * 1024) {
-        alert('A imagem é muito grande. Escolha uma imagem de até 1MB.');
+      if (file.size > 2 * 1024 * 1024) {
+        alert('A imagem é muito grande. Escolha uma imagem de até 2MB.');
         return;
       }
       const reader = new FileReader();
@@ -164,14 +166,26 @@ export default function Settings({ user, serviceTypes, onAddType, onUpdateType, 
           </div>
 
           <div className="flex-1 space-y-4 w-full">
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Nome de Guerra / Completo</label>
-              <input
-                type="text"
-                value={profileData.name}
-                onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
-                className="w-full bg-[#0a0a0a] border border-[#262626] rounded-xl py-3 px-4 text-white focus:border-blue-500 outline-none transition-all"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Nome de Guerra / Completo</label>
+                <input
+                  type="text"
+                  value={profileData.name}
+                  onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
+                  className="w-full bg-[#0a0a0a] border border-[#262626] rounded-xl py-3 px-4 text-white focus:border-blue-500 outline-none transition-all"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Telefone (Opcional)</label>
+                <input
+                  type="text"
+                  value={profileData.phone}
+                  onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
+                  className="w-full bg-[#0a0a0a] border border-[#262626] rounded-xl py-3 px-4 text-white focus:border-blue-500 outline-none transition-all"
+                  placeholder="(00) 00000-0000"
+                />
+              </div>
             </div>
             <button
               onClick={handleSaveProfile}

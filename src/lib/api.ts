@@ -55,6 +55,6 @@ export const api = {
   },
 
   user: {
-    updateProfile: (data: { name: string; coat_of_arms?: string }) => api.request('/api/user/profile', { method: 'PUT', body: JSON.stringify(data) }),
+    updateProfile: (data: { name: string; phone?: string; coat_of_arms?: string }) => api.request('/api/user/profile', { method: 'PUT', body: JSON.stringify(data) }),
   }
 };

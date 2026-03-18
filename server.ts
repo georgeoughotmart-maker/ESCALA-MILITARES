@@ -55,7 +55,8 @@ db = {
   },
   prepare: (sql: string) => ({
     run: async (...args: any[]) => {
-      const res = await client.execute({ sql, args });
+      const normalizedArgs = args.map(arg => arg === undefined ? null : arg);
+      const res = await client.execute({ sql, args: normalizedArgs });
       return { 
         lastInsertRowid: (res.lastInsertRowid !== undefined && res.lastInsertRowid !== null) 
           ? Number(res.lastInsertRowid) 
@@ -63,12 +64,14 @@ db = {
       };
     },
     get: async (...args: any[]) => {
-      const res = await client.execute({ sql, args });
+      const normalizedArgs = args.map(arg => arg === undefined ? null : arg);
+      const res = await client.execute({ sql, args: normalizedArgs });
       if (!res.rows[0]) return null;
       return normalizeRows([res.rows[0]])[0];
     },
     all: async (...args: any[]) => {
-      const res = await client.execute({ sql, args });
+      const normalizedArgs = args.map(arg => arg === undefined ? null : arg);
+      const res = await client.execute({ sql, args: normalizedArgs });
       return normalizeRows(res.rows);
     }
   }),
@@ -294,10 +297,28 @@ app.post('/api/auth/login', async (req, res) => {
 
 // User Profile
 app.put('/api/user/profile', authenticateToken, async (req: any, res) => {
-  const { name, phone, coat_of_arms } = req.body;
-  await db.prepare('UPDATE users SET name = ?, phone = ?, coat_of_arms = ? WHERE id = ?')
-    .run(name, phone, coat_of_arms, req.user.id);
-  res.json({ message: 'Perfil atualizado' });
+  try {
+    const { name, phone, coat_of_arms } = req.body;
+    const userId = req.user.id;
+    
+    console.log(`Updating profile for user ${userId}`);
+    
+    // Get current user to preserve values if not provided
+    const currentUser: any = await db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
+    if (!currentUser) return res.status(404).json({ error: 'Usuário não encontrado' });
+
+    const finalName = name !== undefined ? name : currentUser.name;
+    const finalPhone = phone !== undefined ? phone : currentUser.phone;
+    const finalCoatOfArms = coat_of_arms !== undefined ? coat_of_arms : currentUser.coat_of_arms;
+
+    await db.prepare('UPDATE users SET name = ?, phone = ?, coat_of_arms = ? WHERE id = ?')
+      .run(finalName, finalPhone, finalCoatOfArms, userId);
+    
+    res.json({ message: 'Perfil atualizado' });
+  } catch (error: any) {
+    console.error('Error updating profile:', error);
+    res.status(500).json({ error: 'Erro ao atualizar perfil: ' + error.message });
+  }
 });
 
 // Service Types
