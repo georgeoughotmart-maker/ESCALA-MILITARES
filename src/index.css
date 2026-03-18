@@ -57,44 +57,62 @@ body {
   gap: 1px;
   background-color: var(--border);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 16px;
   overflow: hidden;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
 }
 
 .calendar-day {
   background-color: var(--card-bg);
-  min-height: 100px;
-  padding: 8px;
-  transition: background-color 0.2s;
+  min-height: 110px;
+  padding: 10px;
+  transition: all 0.2s ease;
+  position: relative;
 }
 
 .calendar-day:hover {
-  background-color: #1f1f1f;
+  background-color: #222222;
+  z-index: 10;
 }
 
 .calendar-day.other-month {
-  opacity: 0.3;
+  opacity: 0.25;
+  background-color: #121212;
 }
 
 .calendar-day.today {
-  background-color: #1a1a1a;
+  background-color: rgba(59, 130, 246, 0.05);
+}
+
+.calendar-day.today::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--accent);
 }
 
 .calendar-day.has-service {
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .calendar-day.has-service:hover {
-  filter: brightness(1.2);
+  filter: brightness(1.15) saturate(1.1);
+  transform: scale(1.02);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
 
 .calendar-day.today .day-number {
-  background-color: var(--accent);
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
+  border-radius: 8px;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
 }
