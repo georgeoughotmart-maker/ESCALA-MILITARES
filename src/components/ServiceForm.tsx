@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Calendar as CalendarIcon, Clock, DollarSign, FileText, Trash2, Settings as SettingsIcon } from 'lucide-react';
+import { X, Calendar as CalendarIcon, Clock, DollarSign, FileText, Bell, Trash2, Settings as SettingsIcon } from 'lucide-react';
 import { Service, ServiceType } from '../types';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
@@ -171,6 +171,43 @@ export default function ServiceForm({ service, serviceTypes, initialDate, onClos
                 placeholder="Detalhes adicionais..."
               />
             </div>
+          </div>
+
+          <div className="p-4 bg-[#0a0a0a] border border-[#262626] rounded-xl space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Bell size={18} className="text-blue-500" />
+                <div>
+                  <span className="text-sm font-medium text-white block">Ativar Lembrete</span>
+                  <span className="text-[10px] text-neutral-500">Receba um alerta antes do serviço</span>
+                </div>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={formData.reminder_enabled} 
+                  onChange={(e) => setFormData({ ...formData, reminder_enabled: e.target.checked })}
+                  className="sr-only peer" 
+                />
+                <div className="w-11 h-6 bg-neutral-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              </label>
+            </div>
+            
+            {formData.reminder_enabled && (
+              <div className="space-y-1 animate-in slide-in-from-top-2 duration-200">
+                <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Antecedência</label>
+                <select
+                  value={formData.reminder_before_hours}
+                  onChange={(e) => setFormData({ ...formData, reminder_before_hours: Number(e.target.value) })}
+                  className="w-full bg-[#171717] border border-[#262626] rounded-lg py-2 px-3 text-sm text-white outline-none"
+                >
+                  <option value={1}>1 hora antes</option>
+                  <option value={6}>6 horas antes</option>
+                  <option value={12}>12 horas antes</option>
+                  <option value={24}>24 horas antes</option>
+                </select>
+              </div>
+            )}
           </div>
 
           <div className="flex gap-3 pt-4">

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Palette, Clock, DollarSign, Save, X, Upload, User as UserIcon } from 'lucide-react';
+import { Plus, Edit2, Trash2, Palette, Clock, DollarSign, Save, X, Upload, User as UserIcon, Music, Play, Volume2 } from 'lucide-react';
 import { ServiceType, User } from '../types';
 
 interface SettingsProps {
@@ -73,7 +73,12 @@ export default function Settings({ user, serviceTypes, onAddType, onUpdateType, 
   const testSound = () => {
     const defaultSound = 'https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3';
     const audio = new Audio(alertSound || defaultSound);
-    audio.play().catch(e => alert('Erro ao reproduzir som. Verifique se o arquivo é um MP3 válido.'));
+    audio.play().then(() => {
+      setTimeout(() => {
+        audio.pause();
+        audio.currentTime = 0;
+      }, 3000);
+    }).catch(e => alert('Erro ao reproduzir som. Verifique se o arquivo é um MP3 válido.'));
   };
 
   const resetSound = () => {
@@ -179,6 +184,69 @@ export default function Settings({ user, serviceTypes, onAddType, onUpdateType, 
         </div>
       </section>
       
+      <section className="bg-[#171717] border border-[#262626] rounded-2xl p-6 space-y-6">
+        <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+          <Volume2 size={18} className="text-blue-500" />
+          Notificações e Alertas
+        </h3>
+        <p className="text-xs text-neutral-500 -mt-4">Escolha o som que será reproduzido nos lembretes de serviço. O toque dura 3 segundos.</p>
+        
+        <div className="space-y-4">
+          <div className="flex flex-col md:flex-row gap-4 items-center justify-between p-4 bg-[#0a0a0a] border border-[#262626] rounded-xl">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-blue-600/10 rounded-xl flex items-center justify-center text-blue-500">
+                <Music size={24} />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-white">Som do Alerta</p>
+                <p className="text-xs text-neutral-500">
+                  {alertSound ? 'Personalizado (MP3)' : 'Padrão do Sistema'}
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2 w-full md:w-auto">
+              <button
+                onClick={testSound}
+                className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-neutral-800 hover:bg-neutral-700 text-white text-sm font-bold py-2 px-4 rounded-lg transition-all"
+              >
+                <Play size={16} /> Testar
+              </button>
+              
+              <button
+                onClick={() => soundInputRef.current?.click()}
+                className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold py-2 px-4 rounded-lg transition-all"
+              >
+                <Upload size={16} /> Alterar MP3
+              </button>
+              
+              {alertSound && (
+                <button
+                  onClick={resetSound}
+                  className="p-2 text-neutral-500 hover:text-red-500 transition-colors"
+                  title="Restaurar Padrão"
+                >
+                  <Trash2 size={18} />
+                </button>
+              )}
+            </div>
+          </div>
+          
+          <input 
+            type="file" 
+            ref={soundInputRef} 
+            onChange={handleSoundUpload} 
+            accept="audio/mpeg,audio/mp3" 
+            className="hidden" 
+          />
+          
+          <p className="text-[10px] text-neutral-500 text-center md:text-left">
+            * O som será reproduzido quando um lembrete de serviço for ativado. 
+            O toque é interrompido após 3 segundos.
+          </p>
+        </div>
+      </section>
+
       <section className="space-y-4">
         <div className="flex justify-between items-center">
           <div>
