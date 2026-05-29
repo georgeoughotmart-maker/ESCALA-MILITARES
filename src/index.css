@@ -6,11 +6,11 @@
 }
 
 :root {
-  --bg: #0a0a0a;
-  --card-bg: #171717;
-  --border: #262626;
-  --text-primary: #ffffff;
-  --text-secondary: #a3a3a3;
+  --bg: #f8fafc;
+  --card-bg: #ffffff;
+  --border: #e2e8f0;
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
   --accent: #3b82f6;
 }
 
@@ -32,12 +32,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border);
+  background: #cbd5e1;
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #404040;
+  background: #94a3b8;
 }
 
 /* Animations */
@@ -54,30 +54,45 @@ body {
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 1px;
+  gap: 1.5px;
   background-color: var(--border);
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 20px -5px rgba(0, 0, 0, 0.1);
+}
+
+@media (min-width: 640px) {
+  .calendar-grid {
+    border-radius: 16px;
+    gap: 2px;
+  }
 }
 
 .calendar-day {
   background-color: var(--card-bg);
-  min-height: 110px;
-  padding: 10px;
-  transition: all 0.2s ease;
+  min-height: 80px;
+  padding: 8px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
 }
 
+@media (min-width: 640px) {
+  .calendar-day {
+    min-height: 120px;
+    padding: 12px;
+  }
+}
+
 .calendar-day:hover {
-  background-color: #222222;
+  background-color: #f1f5f9;
   z-index: 10;
+  transform: translateY(-2px);
 }
 
 .calendar-day.other-month {
-  opacity: 0.25;
-  background-color: #121212;
+  opacity: 0.5;
+  background-color: #f8fafc;
 }
 
 .calendar-day.today {
@@ -90,8 +105,8 @@ body {
   top: 0;
   left: 0;
   right: 0;
-  height: 2px;
-  background: var(--accent);
+  height: 3px;
+  background: linear-gradient(90deg, #3b82f6, #60a5fa);
 }
 
 .calendar-day.has-service {
@@ -99,20 +114,21 @@ body {
 }
 
 .calendar-day.has-service:hover {
-  filter: brightness(1.15) saturate(1.1);
-  transform: scale(1.02);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  filter: brightness(1.05) saturate(1.1);
+  transform: scale(1.03) translateY(-4px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
 
 .calendar-day.today .day-number {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
   color: white;
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
-  font-weight: 700;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+  border-radius: 10px;
+  font-weight: 800;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  transform: scale(1.1);
 }

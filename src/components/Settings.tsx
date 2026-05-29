@@ -129,28 +129,28 @@ export default function Settings({ user, serviceTypes, onAddType, onUpdateType, 
   return (
     <div className="space-y-8">
       <header>
-        <h2 className="text-2xl font-bold text-white">Configurações</h2>
-        <p className="text-neutral-500">Personalize seus tipos de serviço e preferências</p>
+        <h2 className="text-2xl font-bold text-slate-900">Configurações</h2>
+        <p className="text-slate-500 font-medium">Personalize seus tipos de serviço e preferências</p>
       </header>
 
-      <section className="bg-[#171717] border border-[#262626] rounded-2xl p-6 space-y-6">
-        <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-          <UserIcon size={18} className="text-blue-500" />
+      <section className="bg-white border border-slate-200 rounded-2xl p-6 space-y-6 shadow-sm">
+        <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+          <UserIcon size={18} className="text-blue-600" />
           Perfil e Identidade
         </h3>
-        <p className="text-xs text-neutral-500 -mt-4">Defina seu nome de guerra e o brasão da sua corporação para personalizar o app.</p>
+        <p className="text-xs text-slate-500 -mt-4 font-medium">Defina seu nome de guerra e o brasão da sua corporação para personalizar o app.</p>
         
         <div className="flex flex-col md:flex-row gap-8 items-start">
           <div className="flex flex-col items-center gap-4">
-            <div className="w-32 h-32 bg-[#0a0a0a] border border-[#262626] rounded-2xl flex items-center justify-center overflow-hidden relative group">
+            <div className="w-32 h-32 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-center overflow-hidden relative group shadow-inner">
               {profileData.coat_of_arms ? (
                 <img src={profileData.coat_of_arms} alt="Brasão" className="w-full h-full object-contain p-2" />
               ) : (
-                <Palette size={40} className="text-neutral-700" />
+                <Palette size={40} className="text-slate-200" />
               )}
               <button 
                 onClick={() => fileInputRef.current?.click()}
-                className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity"
+                className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity"
               >
                 <Upload size={24} />
               </button>
@@ -162,27 +162,27 @@ export default function Settings({ user, serviceTypes, onAddType, onUpdateType, 
               accept="image/*" 
               className="hidden" 
             />
-            <p className="text-[10px] text-neutral-500 uppercase tracking-widest font-bold">Brasão da Corporação</p>
+            <p className="text-[10px] text-slate-400 uppercase tracking-widest font-black">Brasão da Corporação</p>
           </div>
 
           <div className="flex-1 space-y-4 w-full">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Nome de Guerra / Completo</label>
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Nome de Guerra / Completo</label>
                 <input
                   type="text"
                   value={profileData.name}
                   onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
-                  className="w-full bg-[#0a0a0a] border border-[#262626] rounded-xl py-3 px-4 text-white focus:border-blue-500 outline-none transition-all"
+                  className="w-full bg-white border border-slate-200 rounded-xl py-3 px-4 text-slate-900 focus:border-blue-500 outline-none transition-all font-medium"
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Telefone (Opcional)</label>
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Telefone (Opcional)</label>
                 <input
                   type="text"
                   value={profileData.phone}
                   onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
-                  className="w-full bg-[#0a0a0a] border border-[#262626] rounded-xl py-3 px-4 text-white focus:border-blue-500 outline-none transition-all"
+                  className="w-full bg-white border border-slate-200 rounded-xl py-3 px-4 text-slate-900 focus:border-blue-500 outline-none transition-all font-medium"
                   placeholder="(00) 00000-0000"
                 />
               </div>
@@ -198,22 +198,22 @@ export default function Settings({ user, serviceTypes, onAddType, onUpdateType, 
         </div>
       </section>
       
-      <section className="bg-[#171717] border border-[#262626] rounded-2xl p-6 space-y-6">
-        <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-          <Volume2 size={18} className="text-blue-500" />
+      <section className="bg-white border border-slate-200 rounded-2xl p-6 space-y-6 shadow-sm">
+        <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+          <Volume2 size={18} className="text-blue-600" />
           Notificações e Alertas
         </h3>
-        <p className="text-xs text-neutral-500 -mt-4">Escolha o som que será reproduzido nos lembretes de serviço. O toque dura 3 segundos.</p>
+        <p className="text-xs text-slate-500 -mt-4 font-medium">Escolha o som que será reproduzido nos lembretes de serviço. O toque dura 3 segundos.</p>
         
         <div className="space-y-4">
-          <div className="flex flex-col md:flex-row gap-4 items-center justify-between p-4 bg-[#0a0a0a] border border-[#262626] rounded-xl">
+          <div className="flex flex-col md:flex-row gap-4 items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-xl">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-blue-600/10 rounded-xl flex items-center justify-center text-blue-500">
+              <div className="w-12 h-12 bg-blue-600/10 rounded-xl flex items-center justify-center text-blue-600 shadow-sm">
                 <Music size={24} />
               </div>
               <div>
-                <p className="text-sm font-bold text-white">Som do Alerta</p>
-                <p className="text-xs text-neutral-500">
+                <p className="text-sm font-bold text-slate-900">Som do Alerta</p>
+                <p className="text-xs text-slate-500 font-medium">
                   {alertSound ? 'Personalizado (MP3)' : 'Padrão do Sistema'}
                 </p>
               </div>
@@ -222,14 +222,14 @@ export default function Settings({ user, serviceTypes, onAddType, onUpdateType, 
             <div className="flex items-center gap-2 w-full md:w-auto">
               <button
                 onClick={testSound}
-                className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-neutral-800 hover:bg-neutral-700 text-white text-sm font-bold py-2 px-4 rounded-lg transition-all"
+                className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-slate-200 hover:bg-slate-300 text-slate-900 text-sm font-bold py-2 px-4 rounded-lg transition-all"
               >
                 <Play size={16} /> Testar
               </button>
               
               <button
                 onClick={() => soundInputRef.current?.click()}
-                className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold py-2 px-4 rounded-lg transition-all"
+                className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold py-2 px-4 rounded-lg transition-all shadow-md"
               >
                 <Upload size={16} /> Alterar MP3
               </button>
@@ -237,7 +237,7 @@ export default function Settings({ user, serviceTypes, onAddType, onUpdateType, 
               {alertSound && (
                 <button
                   onClick={resetSound}
-                  className="p-2 text-neutral-500 hover:text-red-500 transition-colors"
+                  className="p-2 text-slate-400 hover:text-red-500 transition-colors"
                   title="Restaurar Padrão"
                 >
                   <Trash2 size={18} />
@@ -254,7 +254,7 @@ export default function Settings({ user, serviceTypes, onAddType, onUpdateType, 
             className="hidden" 
           />
           
-          <p className="text-[10px] text-neutral-500 text-center md:text-left">
+          <p className="text-[10px] text-slate-400 text-center md:text-left font-medium">
             * O som será reproduzido quando um lembrete de serviço for ativado. 
             O toque é interrompido após 3 segundos.
           </p>
@@ -264,12 +264,12 @@ export default function Settings({ user, serviceTypes, onAddType, onUpdateType, 
       <section className="space-y-4">
         <div className="flex justify-between items-center">
           <div>
-            <h3 className="text-lg font-semibold text-white">Tipos de Serviço</h3>
-            <p className="text-xs text-neutral-500">Gerencie as categorias de serviço (ex: Ordinário, PJES, Diária).</p>
+            <h3 className="text-lg font-bold text-slate-900">Tipos de Serviço</h3>
+            <p className="text-xs text-slate-500 font-medium">Gerencie as categorias de serviço (ex: Ordinário, PJES, Diária).</p>
           </div>
           <button 
             onClick={() => setIsAdding(true)}
-            className="flex items-center gap-2 text-sm font-medium text-blue-500 hover:text-blue-400 transition-colors"
+            className="flex items-center gap-2 text-sm font-bold text-blue-600 hover:text-blue-500 transition-colors"
           >
             <Plus size={18} />
             Novo Tipo
@@ -278,12 +278,12 @@ export default function Settings({ user, serviceTypes, onAddType, onUpdateType, 
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {(isAdding || editingId !== null) && (
-            <div className="bg-[#171717] border border-blue-500/50 rounded-2xl p-6 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="bg-white border border-blue-200 rounded-2xl p-6 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200 shadow-lg">
               <div className="flex justify-between items-center mb-2">
-                <h4 className="font-bold text-white">{editingId ? 'Editar Tipo' : 'Novo Tipo'}</h4>
+                <h4 className="font-black text-slate-900">{editingId ? 'Editar Tipo' : 'Novo Tipo'}</h4>
                 <button 
                   onClick={() => { setIsAdding(false); setEditingId(null); }}
-                  className="text-neutral-500 hover:text-white"
+                  className="text-slate-400 hover:text-slate-600"
                 >
                   <X size={20} />
                 </button>
@@ -291,35 +291,35 @@ export default function Settings({ user, serviceTypes, onAddType, onUpdateType, 
               
               <div className="space-y-3">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Nome</label>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nome</label>
                   <input
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full bg-[#0a0a0a] border border-[#262626] rounded-xl py-2 px-3 text-white focus:border-blue-500 outline-none"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-slate-900 focus:border-blue-500 outline-none font-medium"
                     placeholder="Ex: Gratificação"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Valor Padrão</label>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Valor Padrão</label>
                     <div className="relative">
-                      <DollarSign className="absolute left-2 top-1/2 -translate-y-1/2 text-neutral-500" size={14} />
+                      <DollarSign className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
                       <input
                         type="number"
                         value={formData.default_value}
                         onChange={(e) => setFormData({ ...formData, default_value: Number(e.target.value) })}
-                        className="w-full bg-[#0a0a0a] border border-[#262626] rounded-xl py-2 pl-7 pr-3 text-white focus:border-blue-500 outline-none"
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 pl-7 pr-3 text-slate-900 focus:border-blue-500 outline-none font-medium"
                       />
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Carga Horária</label>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Carga Horária</label>
                     <select
                       value={formData.default_workload}
                       onChange={(e) => setFormData({ ...formData, default_workload: e.target.value })}
-                      className="w-full bg-[#0a0a0a] border border-[#262626] rounded-xl py-2 px-3 text-white focus:border-blue-500 outline-none"
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl py-2 px-3 text-slate-900 focus:border-blue-500 outline-none font-medium"
                     >
                       <option value="24h">24h</option>
                       <option value="12h">12h</option>
@@ -331,7 +331,7 @@ export default function Settings({ user, serviceTypes, onAddType, onUpdateType, 
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Cor</label>
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Cor</label>
                   <div className="flex items-center gap-3">
                     <input
                       type="color"
@@ -339,7 +339,7 @@ export default function Settings({ user, serviceTypes, onAddType, onUpdateType, 
                       onChange={(e) => setFormData({ ...formData, color: e.target.value })}
                       className="w-10 h-10 rounded-lg bg-transparent border-none cursor-pointer"
                     />
-                    <span className="text-xs text-neutral-400 font-mono">{formData.color}</span>
+                    <span className="text-xs text-slate-500 font-mono font-bold">{formData.color}</span>
                   </div>
                 </div>
               </div>
@@ -347,7 +347,7 @@ export default function Settings({ user, serviceTypes, onAddType, onUpdateType, 
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                className="w-full bg-blue-600 hover:bg-blue-500 text-white font-black py-3 rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50 shadow-md"
               >
                 {saving ? (
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -360,7 +360,7 @@ export default function Settings({ user, serviceTypes, onAddType, onUpdateType, 
           )}
 
           {serviceTypes.map((type) => (
-            <div key={type.id} className="bg-[#171717] border border-[#262626] rounded-2xl p-6 flex items-center justify-between group hover:border-neutral-700 transition-all">
+            <div key={type.id} className="bg-white border border-slate-200 rounded-2xl p-6 flex items-center justify-between group hover:border-blue-200 transition-all shadow-sm">
               <div className="flex items-center gap-4">
                 <div 
                   className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg"
@@ -369,13 +369,13 @@ export default function Settings({ user, serviceTypes, onAddType, onUpdateType, 
                   <Palette size={24} />
                 </div>
                 <div>
-                  <h4 className="font-bold text-white">{type.name}</h4>
-                  <div className="flex items-center gap-3 text-xs text-neutral-500 mt-1">
+                  <h4 className="font-bold text-slate-900">{type.name}</h4>
+                  <div className="flex items-center gap-3 text-xs text-slate-500 mt-1 font-medium">
                     <span className="flex items-center gap-1">
-                      <DollarSign size={12} /> R$ {(type.default_value || 0).toFixed(2)}
+                      <DollarSign size={12} className="text-green-600" /> R$ {(type.default_value || 0).toFixed(2)}
                     </span>
                     <span className="flex items-center gap-1">
-                      <Clock size={12} /> {type.default_workload}
+                      <Clock size={12} className="text-blue-600" /> {type.default_workload}
                     </span>
                   </div>
                 </div>
@@ -383,13 +383,13 @@ export default function Settings({ user, serviceTypes, onAddType, onUpdateType, 
               <div className="flex gap-2">
                 <button 
                   onClick={() => handleEdit(type)}
-                  className="p-2 bg-neutral-800 hover:bg-blue-600/20 hover:text-blue-500 rounded-lg text-neutral-400 transition-all"
+                  className="p-2 bg-slate-50 hover:bg-blue-50 hover:text-blue-600 rounded-lg text-slate-400 transition-all border border-slate-100"
                 >
                   <Edit2 size={16} />
                 </button>
                 <button 
                   onClick={() => onDeleteType(type.id)}
-                  className="p-2 bg-neutral-800 hover:bg-red-600/20 hover:text-red-500 rounded-lg text-neutral-400 transition-all"
+                  className="p-2 bg-slate-50 hover:bg-red-50 hover:text-red-600 rounded-lg text-slate-400 transition-all border border-slate-100"
                 >
                   <Trash2 size={16} />
                 </button>
@@ -399,14 +399,14 @@ export default function Settings({ user, serviceTypes, onAddType, onUpdateType, 
         </div>
       </section>
 
-      <section className="bg-[#171717] border border-[#262626] rounded-2xl p-6 space-y-4">
-        <h3 className="text-lg font-semibold text-white">Sobre o App</h3>
-        <p className="text-sm text-neutral-400 leading-relaxed">
+      <section className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-sm">
+        <h3 className="text-lg font-bold text-slate-900">Sobre o App</h3>
+        <p className="text-sm text-slate-500 leading-relaxed font-medium">
           O <strong>Escala Militar Pro</strong> foi desenvolvido para facilitar a vida do militar, 
           proporcionando um controle rigoroso sobre seus serviços e ganhos financeiros. 
           Todos os dados são armazenados de forma segura e individual.
         </p>
-        <div className="pt-4 flex justify-between items-center text-[10px] text-neutral-600 uppercase tracking-widest font-bold">
+        <div className="pt-4 flex justify-between items-center text-[10px] text-slate-400 uppercase tracking-widest font-black">
           <span>Versão 1.0.0</span>
           <span>© 2024 Militar Tech</span>
         </div>

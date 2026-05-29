@@ -24,12 +24,12 @@ export default function Layout({ children, user, onLogout, onAddService }: Layou
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
       {/* Mobile Header */}
-      <header className="md:hidden bg-[#171717] border-b border-[#262626] p-4 flex justify-between items-center sticky top-0 z-50">
+      <header className="md:hidden bg-white border-b border-slate-200 p-4 flex justify-between items-center sticky top-0 z-50">
         <div className="flex items-center gap-3">
           {user?.coat_of_arms && (
             <img src={user.coat_of_arms} alt="Brasão" className="w-8 h-8 object-contain" />
           )}
-          <h1 className="text-xl font-bold text-blue-500">Escala Pro</h1>
+          <h1 className="text-xl font-bold text-blue-600">Escala Pro</h1>
         </div>
         <div className="flex items-center gap-4">
           <button 
@@ -42,13 +42,13 @@ export default function Layout({ children, user, onLogout, onAddService }: Layou
       </header>
 
       {/* Sidebar (Desktop) / Bottom Nav (Mobile) */}
-      <nav className="fixed bottom-0 left-0 right-0 md:relative md:w-64 bg-[#171717] border-t md:border-t-0 md:border-r border-[#262626] z-50">
+      <nav className="fixed bottom-0 left-0 right-0 md:relative md:w-64 bg-white border-t md:border-t-0 md:border-r border-slate-200 z-50">
         <div className="hidden md:flex flex-col p-6 h-full">
           <div className="flex items-center gap-3 mb-8">
             {user?.coat_of_arms && (
               <img src={user.coat_of_arms} alt="Brasão" className="w-10 h-10 object-contain" />
             )}
-            <h1 className="text-2xl font-bold text-blue-500">Escala Pro</h1>
+            <h1 className="text-2xl font-bold text-blue-600">Escala Pro</h1>
           </div>
           
           <div className="flex-1 space-y-2">
@@ -56,34 +56,34 @@ export default function Layout({ children, user, onLogout, onAddService }: Layou
               <button
                 key={item.path}
                 onClick={() => navigate(item.path)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
                   location.pathname === item.path 
-                    ? 'bg-blue-600/10 text-blue-500' 
-                    : 'text-neutral-400 hover:bg-neutral-800'
+                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' 
+                    : 'text-slate-500 hover:bg-slate-100'
                 }`}
               >
                 <item.icon size={20} />
-                <span className="font-medium">{item.label}</span>
+                <span className="font-semibold">{item.label}</span>
               </button>
             ))}
           </div>
 
-          <div className="pt-6 border-t border-[#262626]">
-            <div className="flex items-center gap-3 mb-4 px-4">
-              <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-sm font-bold">
+          <div className="pt-6 border-t border-slate-200">
+            <div className="flex items-center gap-3 mb-4 px-4 text-slate-900">
+              <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-sm font-bold text-white">
                 {user?.name?.[0]?.toUpperCase()}
               </div>
               <div className="flex-1 overflow-hidden">
-                <p className="text-sm font-medium truncate">{user?.name}</p>
-                <p className="text-xs text-neutral-500 truncate">{user?.email}</p>
+                <p className="text-sm font-bold truncate">{user?.name}</p>
+                <p className="text-xs text-slate-500 truncate">{user?.email}</p>
               </div>
             </div>
             <button
               onClick={onLogout}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-400/10 transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 hover:bg-red-50 transition-colors"
             >
               <LogOut size={20} />
-              <span className="font-medium">Sair</span>
+              <span className="font-semibold">Sair</span>
             </button>
           </div>
         </div>
@@ -95,11 +95,11 @@ export default function Layout({ children, user, onLogout, onAddService }: Layou
               key={item.path}
               onClick={() => navigate(item.path)}
               className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors ${
-                location.pathname === item.path ? 'text-blue-500' : 'text-neutral-500'
+                location.pathname === item.path ? 'text-blue-600' : 'text-slate-400'
               }`}
             >
               <item.icon size={20} />
-              <span className="text-[10px] font-medium">{item.label}</span>
+              <span className="text-[10px] font-bold">{item.label}</span>
             </button>
           ))}
         </div>
@@ -107,7 +107,7 @@ export default function Layout({ children, user, onLogout, onAddService }: Layou
 
       {/* Main Content */}
       <main className="flex-1 pb-20 md:pb-0 overflow-y-auto">
-        <div className="max-w-5xl mx-auto p-4 md:p-8">
+        <div className="max-w-5xl mx-auto p-3 sm:p-4 md:p-8">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
