@@ -108,20 +108,20 @@ export default function Calendar({ services, serviceTypes, onAddService, onEditS
             return (
               <div 
                 key={i} 
-                className={`calendar-day cursor-pointer group relative flex flex-col justify-between p-1 sm:p-2.5 min-h-[52px] sm:min-h-[120px] transition-all hover:bg-slate-50 ${
+                className={`calendar-day cursor-pointer group relative flex flex-col justify-between p-1 sm:p-2 sm:min-h-[72px] sm:min-h-[120px] transition-all hover:bg-slate-50 ${
                   !isCurrentMonth ? 'opacity-30 bg-slate-50' : 'bg-white'
                 } ${isToday ? 'bg-blue-50/20' : ''} ${
                   isSelected ? 'ring-2 ring-blue-500 ring-offset-1 z-20 scale-[1.01] shadow-sm' : ''
                 }`}
                 onClick={() => handleDayClick(day)}
-                style={primaryService && window.innerWidth >= 640 ? { 
-                  backgroundColor: `${primaryService.type_color}10`,
-                  borderLeft: `4px solid ${primaryService.type_color}`,
+                style={primaryService ? { 
+                  backgroundColor: `${primaryService.type_color}18`,
+                  borderLeft: `5px solid ${primaryService.type_color}`,
                 } : undefined}
               >
                 <div className="flex justify-between items-center mb-0.5 sm:mb-2">
-                  <span className={`day-number text-xs sm:text-sm font-bold ${
-                    isToday ? 'bg-blue-600 text-white w-5 h-5 sm:w-7 sm:h-7 rounded-lg flex items-center justify-center shadow-sm shadow-blue-500/30' : (isSelected ? 'text-blue-600 font-extrabold' : (isCurrentMonth ? 'text-slate-900' : 'text-slate-300'))
+                  <span className={`day-number text-[10px] sm:text-xs font-bold ${
+                    isToday ? 'bg-blue-600 text-white w-5 h-5 sm:w-7 sm:h-7 rounded-md flex items-center justify-center shadow-sm shadow-blue-500/30' : (isSelected ? 'text-blue-600 font-extrabold' : (isCurrentMonth ? 'text-slate-900' : 'text-slate-300'))
                   }`}>
                     {format(day, 'd')}
                   </span>
@@ -171,17 +171,33 @@ export default function Calendar({ services, serviceTypes, onAddService, onEditS
                   )}
                 </div>
 
-                {/* Mobile: Minimalist color indicator dots */}
-                <div className="flex sm:hidden flex-wrap justify-center gap-1 mt-0.5">
-                  {dayServices.slice(0, 3).map(service => (
-                    <span 
-                      key={service.id} 
-                      className="w-1.5 h-1.5 rounded-full shadow-sm" 
-                      style={{ backgroundColor: service.type_color }} 
-                    />
+                {/* Mobile: Beautiful color integrated badge with service name */}
+                <div className="flex sm:hidden flex-col items-center gap-0.5 mt-0.5 w-full max-w-full overflow-hidden">
+                  {dayServices.slice(0, 1).map(service => (
+                    <div 
+                      key={service.id}
+                      className="text-[7.5px] leading-tight font-black truncate px-1 py-0.5 rounded w-full text-center text-white shadow-sm"
+                      style={{ 
+                        backgroundColor: service.type_color,
+                        textShadow: '0 0.5px 1px rgba(0,0,0,0.15)'
+                      }}
+                    >
+                      {service.type_name}
+                    </div>
                   ))}
-                  {dayServices.length > 3 && (
-                    <span className="text-[8px] text-slate-400 font-black leading-none">+</span>
+                  {dayServices.length > 1 && (
+                    <div className="flex items-center gap-0.5 justify-center mt-0.5">
+                      {dayServices.slice(1, 4).map(service => (
+                        <span 
+                          key={service.id} 
+                          className="w-1 h-1 rounded-full shrink-0" 
+                          style={{ backgroundColor: service.type_color }} 
+                        />
+                      ))}
+                      {dayServices.length > 4 && (
+                        <span className="text-[6px] text-slate-500 font-extrabold leading-none">+</span>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>
