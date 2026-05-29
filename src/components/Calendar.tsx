@@ -27,13 +27,12 @@ export default function Calendar({ services, serviceTypes, onAddService, onEditS
   const prevMonth = () => setCurrentDate(subMonths(currentDate, 1));
 
   const getServicesForDay = (day: Date) => {
-    return services.filter(s => {
-      try {
-        return isSameDay(parseISO(s.date), day);
-      } catch (e) {
-        return false;
-      }
-    });
+    try {
+      const dayStr = format(day, 'yyyy-MM-dd');
+      return services.filter(s => s.date === dayStr);
+    } catch (e) {
+      return [];
+    }
   };
 
   // Automatically update selected day when month changes to first of month (if not current month)

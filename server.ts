@@ -90,6 +90,45 @@ db = {
   }
 };
 
+const forceRecreateDb = async (resolvedPath: string, reason: string) => {
+  console.error(`[Self-Healing] Triggered force recreate due to: ${reason}`);
+  try {
+    const suffix = `_corrupted_${Date.now()}`;
+    const filesToRename = [
+      resolvedPath,
+      `${resolvedPath}-wal`,
+      `${resolvedPath}-shm`,
+      `${resolvedPath}-journal`
+    ];
+    
+    for (const file of filesToRename) {
+      if (fs.existsSync(file)) {
+        try {
+          fs.renameSync(file, `${file}${suffix}`);
+          console.log(`[Self-Healing] Renamed ${file} to ${file}${suffix}`);
+        } catch (e) {
+          console.error(`[Self-Healing] Failed to rename companion file ${file}:`, e);
+          try {
+            fs.unlinkSync(file);
+            console.log(`[Self-Healing] Deleted locked/companion file ${file}`);
+          } catch (delErr) {
+            console.error(`[Self-Healing] Failed to delete ${file}:`, delErr);
+          }
+        }
+      }
+    }
+
+    // Re-create the LibSQL client
+    client = createClient({
+      url: url!,
+      authToken: authToken,
+    });
+    console.log('[Self-Healing] Client re-created successfully after clearing corrupted files');
+  } catch (err) {
+    console.error('[Self-Healing] Error during database reset:', err);
+  }
+};
+
 const checkAndCleanCorruptedDb = async () => {
   if (!url.startsWith('file:')) return;
   
@@ -99,26 +138,12 @@ const checkAndCleanCorruptedDb = async () => {
   if (!fs.existsSync(resolvedPath)) return;
   
   try {
-    // Attempt a simple test query to check database integrity/health
-    await client.execute('SELECT 1');
+    // Attempt a check read query from the master catalog table to guarantee actual accessibility
+    await client.execute('SELECT count(*) FROM sqlite_master');
     console.log('Database integrity check passed.');
   } catch (error: any) {
     if (error && error.message && (error.message.includes('SQLITE_CORRUPT') || error.message.includes('malformed') || error.message.includes('corrupt'))) {
-      console.error(`[Self-Healing] Database is corrupted: ${error.message}. Attempting recovery by recreating db...`);
-      try {
-        const corruptedBackup = `${resolvedPath}.corrupted_${Date.now()}`;
-        fs.renameSync(resolvedPath, corruptedBackup);
-        console.log(`[Self-Healing] Renamed corrupted database to: ${corruptedBackup}`);
-        
-        // Re-create the LibSQL client
-        client = createClient({
-          url: url!,
-          authToken: authToken,
-        });
-        console.log('[Self-Healing] Successfully re-created client connection');
-      } catch (fsErr) {
-        console.error('[Self-Healing] Failed to rename/reset corrupted database file:', fsErr);
-      }
+      await forceRecreateDb(resolvedPath, error.message);
     } else {
       console.error('Integrity query failed with other error:', error);
     }
@@ -194,8 +219,62 @@ const initDb = async () => {
 
     dbInitialized = true;
     console.log('Database initialized successfully');
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in initDb:', error);
+    if (error && error.message && (error.message.includes('SQLITE_CORRUPT') || error.message.includes('malformed') || error.message.includes('corrupt'))) {
+      if (url.startsWith('file:')) {
+        const filePath = url.slice(5);
+        const resolvedPath = path.isAbsolute(filePath) ? filePath : path.resolve(process.cwd(), filePath);
+        console.error('Corruption detected in initDb execution! Attempting immediate database recreation...');
+        try {
+          await forceRecreateDb(resolvedPath, error.message);
+          // Try to execute configuration again
+          await db.exec(`
+            CREATE TABLE IF NOT EXISTS users (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              name TEXT NOT NULL,
+              email TEXT UNIQUE NOT NULL,
+              password TEXT NOT NULL,
+              phone TEXT,
+              coat_of_arms TEXT,
+              created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            );
+
+            CREATE TABLE IF NOT EXISTS service_types (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              user_id INTEGER NOT NULL,
+              name TEXT NOT NULL,
+              default_value REAL DEFAULT 0,
+              color TEXT DEFAULT '#3b82f6',
+              default_workload TEXT DEFAULT '24h',
+              FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+            );
+
+            CREATE TABLE IF NOT EXISTS services (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              user_id INTEGER NOT NULL,
+              type_id INTEGER,
+              date TEXT NOT NULL,
+              start_time TEXT,
+              end_time TEXT,
+              value REAL DEFAULT 0,
+              notes TEXT,
+              reminder_enabled INTEGER DEFAULT 0,
+              reminder_before_hours INTEGER DEFAULT 1,
+              reminder_sent INTEGER DEFAULT 0,
+              created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+              FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+              FOREIGN KEY (type_id) REFERENCES service_types (id) ON DELETE SET NULL
+            );
+          `);
+          dbInitialized = true;
+          console.log('[Self-Healing] Recreated and successfully initialized tables after corruption recovery.');
+          return;
+        } catch (retryErr) {
+          console.error('[Self-Healing] Serious err: recovery database initialization retry failed as well:', retryErr);
+        }
+      }
+    }
     throw error;
   }
 };
