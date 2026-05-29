@@ -5,6 +5,7 @@ import { createClient } from '@libsql/client';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import fs from 'fs';
 
 dotenv.config();
 
@@ -26,7 +27,7 @@ if (isTurso && !url.startsWith('libsql://') && !url.startsWith('https://') && !u
   url = `libsql://${url}`;
 }
 
-const client = createClient({
+let client = createClient({
   url: url!,
   authToken: authToken,
 });
@@ -89,9 +90,45 @@ db = {
   }
 };
 
+const checkAndCleanCorruptedDb = async () => {
+  if (!url.startsWith('file:')) return;
+  
+  const filePath = url.slice(5); // remove 'file:'
+  const resolvedPath = path.isAbsolute(filePath) ? filePath : path.resolve(process.cwd(), filePath);
+  
+  if (!fs.existsSync(resolvedPath)) return;
+  
+  try {
+    // Attempt a simple test query to check database integrity/health
+    await client.execute('SELECT 1');
+    console.log('Database integrity check passed.');
+  } catch (error: any) {
+    if (error && error.message && (error.message.includes('SQLITE_CORRUPT') || error.message.includes('malformed') || error.message.includes('corrupt'))) {
+      console.error(`[Self-Healing] Database is corrupted: ${error.message}. Attempting recovery by recreating db...`);
+      try {
+        const corruptedBackup = `${resolvedPath}.corrupted_${Date.now()}`;
+        fs.renameSync(resolvedPath, corruptedBackup);
+        console.log(`[Self-Healing] Renamed corrupted database to: ${corruptedBackup}`);
+        
+        // Re-create the LibSQL client
+        client = createClient({
+          url: url!,
+          authToken: authToken,
+        });
+        console.log('[Self-Healing] Successfully re-created client connection');
+      } catch (fsErr) {
+        console.error('[Self-Healing] Failed to rename/reset corrupted database file:', fsErr);
+      }
+    } else {
+      console.error('Integrity query failed with other error:', error);
+    }
+  }
+};
+
 let dbInitialized = false;
 const initDb = async () => {
   if (dbInitialized) return;
+  await checkAndCleanCorruptedDb();
   console.log('Initializing database tables...');
   try {
     await db.exec(`
